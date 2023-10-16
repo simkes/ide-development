@@ -1,5 +1,11 @@
-@file:OptIn(ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class,
-    ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class, ExperimentalTextApi::class
+@file:OptIn(
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class,
+    ExperimentalTextApi::class
 )
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
@@ -20,60 +26,96 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import editor.SimpleTextEditor
+import editor.SimpleTextBuffer
+import editor.TextBuffer
 import kotlin.math.max
 import kotlin.math.min
 
+class App {
+    private val textBuffer: TextBuffer = SimpleTextBuffer()
+    private var text by mutableStateOf(textBuffer.getText())
+    private var caretLine by mutableStateOf(0) // index of line
+    private var caretPos by mutableStateOf(0)  // index of position in line
 
-@OptIn(ExperimentalTextApi::class, ExperimentalComposeUiApi::class)
-@Composable
-@Preview
-fun App() {
-    val textMeasurer = rememberTextMeasurer()
-    val textEditor = SimpleTextEditor()
-    var text by remember { mutableStateOf(textEditor.getText()) }
-    var caret by remember { mutableStateOf(0) }
+    @OptIn(ExperimentalComposeUiApi::class)
+    fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
+        if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
+            println(keyEvent.key)
+            when (keyEvent.key) {
+                Key.Enter -> {
+                    caretLine++
+                    textBuffer.insertLine(caretLine)
+                    caretPos = 0
+                    text = textBuffer.getText()
+                }
 
-    val requester = remember { FocusRequester() }
-
-    MaterialTheme {
-        Box(modifier = Modifier.onKeyEvent {
-            if (it.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
-                println(it.key.keyCode)
-                when (it.key.keyCode) {
-                    Key.DirectionLeft.keyCode -> {
-                        caret = max(0, caret - 1)
-                    }
-                    Key.DirectionRight.keyCode -> {
-                        caret = min(caret + 1, text.length)
+                Key.DirectionLeft -> {
+                    if (caretPos != 0) {
+                        caretPos--
+                    } else if (caretLine != 0) {
+                        caretLine--
+                        caretPos = textBuffer.getLineLength(caretLine)
                     }
                 }
-                when (it.utf16CodePoint) {
-                    // TODO: move ranges & constants to separate class
-                    in 9 .. 126 -> { // ASCII symbols
-                        caret++
-                        textEditor.add(it.utf16CodePoint.toChar(), caret)
-                        text = textEditor.getText()
+
+                Key.DirectionRight -> {
+                    if(caretPos != textBuffer.getLineLength(caretLine)) {
+                        caretPos++
+                    } else if (caretLine <= textBuffer.getSize()) {
+                        caretLine++
+                        caretPos = 0
+                    } else {
+                        textBuffer.insertLine(caretLine)
+                        caretLine++
+                        caretPos = 0
+                        text = textBuffer.getText()
                     }
-                    8 -> { // backspace
-                        textEditor.delete(caret)
-                        caret--
-                        if (caret < 0) caret = 0
-                        text = textEditor.getText()
+                }
+
+                Key.Backspace -> {
+                    if (caretPos != 0) {
+                        textBuffer.deleteChar(caretLine, caretPos - 1)
+                        caretPos--
+                        text = textBuffer.getText()
+                    } else if (caretLine != 0) {
+                        textBuffer.deleteLine(caretLine)
+                        caretLine--
+                        caretPos = textBuffer.getLineLength(caretLine)
                     }
                 }
             }
-            true
-        }) {
-            Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }.focusRequester(requester).fillMaxSize()) {
-                text.let {
-                    val measuredText = textMeasurer.measure(
-                        AnnotatedString(it),
-                        style = TextStyle(fontSize = 20.sp)
-                    )
+            when (keyEvent.utf16CodePoint) {
+                // TODO: move ranges & constants to separate class
+                in 32..126 -> { // ASCII symbols
+                    textBuffer.insertChar(caretLine, caretPos, keyEvent.utf16CodePoint.toChar())
+                    caretPos++
+                    text = textBuffer.getText()
+                    println(text)
+                }
+            }
+        }
+        return true
+    }
 
-                    translate(100f, 100f) {
-                        drawText(measuredText)
+    @OptIn(ExperimentalTextApi::class)
+    @Composable
+    @Preview
+    fun run() {
+        val textMeasurer = rememberTextMeasurer()
+        val requester = remember { FocusRequester() }
+        MaterialTheme {
+            Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }) {
+                Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
+                    .focusRequester(requester).fillMaxSize()) {
+                    text.let {
+                        val measuredText = textMeasurer.measure(
+                            AnnotatedString(it),
+                            style = TextStyle(fontSize = 20.sp)
+                        )
+
+                        translate(100f, 100f) {
+                            drawText(measuredText)
+                        }
                     }
                 }
             }
@@ -81,8 +123,11 @@ fun App() {
     }
 }
 
-fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
-        App()
+fun main() {
+    val app = App()
+    application {
+        Window(onCloseRequest = ::exitApplication) {
+            app.run()
+        }
     }
 }
