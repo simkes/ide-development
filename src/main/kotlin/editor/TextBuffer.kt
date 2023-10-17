@@ -14,4 +14,6 @@ interface TextBuffer {
     fun getSize(): Int
 
     fun getText(): String
+
+    fun getLine(lineIndex: Int): String
 }

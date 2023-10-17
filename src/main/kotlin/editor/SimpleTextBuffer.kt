@@ -49,8 +49,13 @@ class SimpleTextBuffer : TextBuffer {
         val result = StringBuilder()
         for (line in lines) {
             result.append(line.joinToString(""))
-            result.append('\n')
+            result.append("\n")
         }
-        return result.toString().trim()
+        return result.toString()
+    }
+
+    override fun getLine(lineIndex: Int): String {
+        if (lineIndex < 0 || lineIndex >= lines.size) throw IllegalArgumentException("getLine: lineIndex $lineIndex.")
+        return lines[lineIndex].toString()
     }
 }

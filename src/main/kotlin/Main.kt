@@ -20,6 +20,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
@@ -28,6 +30,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import editor.SimpleTextBuffer
 import editor.TextBuffer
+import kotlinx.coroutines.delay
 import kotlin.math.max
 import kotlin.math.min
 
@@ -59,16 +62,33 @@ class App {
                 }
 
                 Key.DirectionRight -> {
-                    if(caretPos != textBuffer.getLineLength(caretLine)) {
+                    if (caretPos != textBuffer.getLineLength(caretLine)) {
                         caretPos++
-                    } else if (caretLine <= textBuffer.getSize()) {
-                        caretLine++
-                        caretPos = 0
                     } else {
-                        textBuffer.insertLine(caretLine)
                         caretLine++
                         caretPos = 0
-                        text = textBuffer.getText()
+                        if (caretLine == textBuffer.getSize()) {
+                            textBuffer.insertLine(caretLine)
+                            text = textBuffer.getText()
+                        }
+                    }
+                }
+
+                Key.DirectionUp -> {
+                    if (caretLine != 0) {
+                        caretLine--
+                        caretPos = min(caretPos, textBuffer.getLineLength(caretLine))
+                    }
+                }
+
+                Key.DirectionDown -> {
+                    if (caretLine < textBuffer.getSize()) {
+                        caretLine++
+                        if (caretLine == textBuffer.getSize()) {
+                            textBuffer.insertLine(caretLine)
+                            text = textBuffer.getText()
+                        }
+                        caretPos = min(caretPos, textBuffer.getLineLength(caretLine))
                     }
                 }
 
@@ -103,18 +123,51 @@ class App {
     fun run() {
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
+        val caretVisible = remember { mutableStateOf(true) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                caretVisible.value = !caretVisible.value
+                delay(500)
+            }
+        }
         MaterialTheme {
             Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }) {
                 Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
                     .focusRequester(requester).fillMaxSize()) {
                     text.let {
+                        val textStyle = TextStyle(fontSize = 20.sp)
                         val measuredText = textMeasurer.measure(
                             AnnotatedString(it),
-                            style = TextStyle(fontSize = 20.sp)
+                            style = textStyle
                         )
+                        val lines = it.split("\n");
+                        val charHeight = measuredText.size.height / max(1, lines.size)
+                        val caretY = charHeight * caretLine.toFloat()
+                        var caretX = 0f
+                        if (lines.getOrNull(caretLine) != null) {
+                            val lineStr = AnnotatedString(
+                                lines[caretLine].substring(
+                                    0,
+                                    min(caretPos, lines[caretLine].length)
+                                )
+                            )
+                            caretX = textMeasurer.measure(
+                                lineStr,
+                                style = textStyle
+                            ).size.width.toFloat()
+                        }
 
-                        translate(100f, 100f) {
+                        translate(50f, 50f) {
                             drawText(measuredText)
+
+                            if (caretVisible.value) {
+                                drawLine(
+                                    color = Color.Black,
+                                    start = Offset(caretX, caretY),
+                                    end = Offset(caretX, caretY + charHeight),
+                                    strokeWidth = 1f
+                                )
+                            }
                         }
                     }
                 }
