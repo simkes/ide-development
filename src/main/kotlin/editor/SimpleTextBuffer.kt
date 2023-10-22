@@ -1,61 +1,16 @@
 package editor
 
 class SimpleTextBuffer : TextBuffer {
-
-    private val lines = mutableListOf<ArrayList<Char>>()
-
-    init {
-        lines.add(ArrayList())
+    private var text = ArrayList<Char>()
+    override fun add(c: Char, pos: Int) {
+        if (pos < 0 || pos > text.size) throw IllegalArgumentException("add: pos $pos.")
+        text.add(pos, c)
     }
 
-    override fun insertChar(lineIndex: Int, pos: Int, c: Char) {
-        if (lineIndex < 0 || lineIndex >= lines.size) throw IllegalArgumentException("insertChar: lineIndex $lineIndex.")
-        val line = lines[lineIndex]
-        if (pos < 0 || pos > line.size) throw IllegalArgumentException("insertChar: pos $pos.")
-        line.add(pos, c)
+    override fun delete(pos: Int) {
+        if (pos < 0 || pos >= text.size) throw IllegalArgumentException("delete: pos $pos.")
+        text.removeAt(pos)
     }
 
-    override fun deleteChar(lineIndex: Int, pos: Int) {
-        if (lineIndex < 0 || lineIndex >= lines.size) throw IllegalArgumentException("deleteChar: lineIndex $lineIndex.")
-        val line = lines[lineIndex]
-        if (pos < 0 || pos >= line.size) throw IllegalArgumentException("deleteChar: pos $pos.")
-        line.removeAt(pos)
-    }
-
-    override fun insertLine(lineIndex: Int) {
-        if (lineIndex < 0 || lineIndex > lines.size) throw IllegalArgumentException("insertLine: lineIndex $lineIndex.")
-        val newLine = ArrayList<Char>()
-        lines.add(lineIndex, newLine)
-    }
-
-    override fun deleteLine(lineIndex: Int) {
-        if (lineIndex <= 0 || lineIndex >= lines.size) throw IllegalArgumentException("deleteLine: lineIndex $lineIndex.")
-        val previousLine = lines[lineIndex - 1]
-        val currentLine = lines[lineIndex]
-        previousLine.addAll(currentLine)
-        lines.removeAt(lineIndex)
-    }
-
-    override fun getLineLength(lineIndex: Int): Int {
-        if (lineIndex < 0 || lineIndex >= lines.size) throw IllegalArgumentException("getLineLength: lineIndex $lineIndex.")
-        return lines[lineIndex].size
-    }
-
-    override fun getSize(): Int {
-        return lines.size
-    }
-
-    override fun getText(): String {
-        val result = StringBuilder()
-        for (line in lines) {
-            result.append(line.joinToString(""))
-            result.append("\n")
-        }
-        return result.toString()
-    }
-
-    override fun getLine(lineIndex: Int): String {
-        if (lineIndex < 0 || lineIndex >= lines.size) throw IllegalArgumentException("getLine: lineIndex $lineIndex.")
-        return lines[lineIndex].toString()
-    }
+    override fun getText(): String = text.joinToString("")
 }

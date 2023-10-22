@@ -37,78 +37,58 @@ import kotlin.math.min
 class App {
     private val textBuffer: TextBuffer = SimpleTextBuffer()
     private var text by mutableStateOf(textBuffer.getText())
-    private var caretLine by mutableStateOf(0) // index of line
-    private var caretPos by mutableStateOf(0)  // index of position in line
+    private var caret by mutableStateOf(0)
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
         if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
             println(keyEvent.key)
             when (keyEvent.key) {
-                Key.Enter -> {
-                    caretLine++
-                    textBuffer.insertLine(caretLine)
-                    caretPos = 0
-                    text = textBuffer.getText()
-                }
-
                 Key.DirectionLeft -> {
-                    if (caretPos != 0) {
-                        caretPos--
-                    } else if (caretLine != 0) {
-                        caretLine--
-                        caretPos = textBuffer.getLineLength(caretLine)
+                    if (caret != 0) {
+                        caret--
                     }
                 }
 
                 Key.DirectionRight -> {
-                    if (caretPos != textBuffer.getLineLength(caretLine)) {
-                        caretPos++
-                    } else {
-                        caretLine++
-                        caretPos = 0
-                        if (caretLine == textBuffer.getSize()) {
-                            textBuffer.insertLine(caretLine)
-                            text = textBuffer.getText()
-                        }
+                    if (caret != text.length) {
+                        caret++
                     }
                 }
 
                 Key.DirectionUp -> {
-                    if (caretLine != 0) {
-                        caretLine--
-                        caretPos = min(caretPos, textBuffer.getLineLength(caretLine))
+                    val lines = text.split("\n")
+                    val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
+                    if (caretLine > 0) {
+                        val prevLine = lines[caretLine - 1]
+                        caret -= caretPos + 1 + prevLine.length
+                        caret += min(caretPos, prevLine.length)
                     }
                 }
 
                 Key.DirectionDown -> {
-                    if (caretLine < textBuffer.getSize()) {
-                        caretLine++
-                        if (caretLine == textBuffer.getSize()) {
-                            textBuffer.insertLine(caretLine)
-                            text = textBuffer.getText()
-                        }
-                        caretPos = min(caretPos, textBuffer.getLineLength(caretLine))
+                    val lines = text.split("\n")
+                    val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
+                    if (caretLine < lines.size - 1) {
+                        val nextLine = lines[caretLine + 1]
+                        caret += lines[caretLine].length - caretPos + 1
+                        caret += min(caretPos, nextLine.length)
                     }
                 }
 
                 Key.Backspace -> {
-                    if (caretPos != 0) {
-                        textBuffer.deleteChar(caretLine, caretPos - 1)
-                        caretPos--
+                    if (caret != 0) {
+                        textBuffer.delete(caret - 1)
+                        caret--
                         text = textBuffer.getText()
-                    } else if (caretLine != 0) {
-                        textBuffer.deleteLine(caretLine)
-                        caretLine--
-                        caretPos = textBuffer.getLineLength(caretLine)
                     }
                 }
             }
             when (keyEvent.utf16CodePoint) {
                 // TODO: move ranges & constants to separate class
-                in 32..126 -> { // ASCII symbols
-                    textBuffer.insertChar(caretLine, caretPos, keyEvent.utf16CodePoint.toChar())
-                    caretPos++
+                in 9..126 -> { // ASCII symbols
+                    textBuffer.add(keyEvent.utf16CodePoint.toChar(), caret)
+                    caret++
                     text = textBuffer.getText()
                     println(text)
                 }
@@ -140,7 +120,8 @@ class App {
                             AnnotatedString(it),
                             style = textStyle
                         )
-                        val lines = it.split("\n");
+                        val lines = it.split("\n")
+                        val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
                         val charHeight = measuredText.size.height / max(1, lines.size)
                         val caretY = charHeight * caretLine.toFloat()
                         var caretX = 0f
@@ -173,6 +154,22 @@ class App {
                 }
             }
         }
+    }
+
+    private fun calculateCaretLineAndPos(lines: List<String>): Pair<Int, Int> {
+        var caretLine = 0
+        var caretPos = 0
+        var posCounter = 0
+        for ((index, line) in lines.withIndex()) {
+            posCounter += line.length + 1
+            if (caret < posCounter) {
+                caretLine = index
+                caretPos = if (index == 0) caret else caret - posCounter + line.length + 1
+                break
+            }
+        }
+
+        return Pair(caretLine, caretPos)
     }
 }
 
