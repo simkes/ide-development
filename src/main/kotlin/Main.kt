@@ -1,11 +1,5 @@
 @file:OptIn(
     ExperimentalTextApi::class,
-    ExperimentalTextApi::class,
-    ExperimentalTextApi::class,
-    ExperimentalTextApi::class,
-    ExperimentalTextApi::class,
-    ExperimentalTextApi::class,
-    ExperimentalTextApi::class
 )
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
@@ -28,69 +22,31 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import editor.SimpleTextBuffer
-import editor.TextBuffer
+import editor.*
 import kotlinx.coroutines.delay
 import kotlin.math.max
 import kotlin.math.min
 
 class App {
-    private val textBuffer: TextBuffer = SimpleTextBuffer()
-    private var text by mutableStateOf(textBuffer.getText())
-    private var caret by mutableStateOf(0)
+    private val viewModel: EditorViewModel = EditorViewModelImpl()
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
         if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
             println(keyEvent.key)
             when (keyEvent.key) {
-                Key.DirectionLeft -> {
-                    if (caret != 0) {
-                        caret--
-                    }
-                }
-
-                Key.DirectionRight -> {
-                    if (caret != text.length) {
-                        caret++
-                    }
-                }
-
-                Key.DirectionUp -> {
-                    val lines = text.split("\n")
-                    val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
-                    if (caretLine > 0) {
-                        val prevLine = lines[caretLine - 1]
-                        caret -= caretPos + 1 + prevLine.length
-                        caret += min(caretPos, prevLine.length)
-                    }
-                }
-
-                Key.DirectionDown -> {
-                    val lines = text.split("\n")
-                    val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
-                    if (caretLine < lines.size - 1) {
-                        val nextLine = lines[caretLine + 1]
-                        caret += lines[caretLine].length - caretPos + 1
-                        caret += min(caretPos, nextLine.length)
-                    }
+                in arrowEventToDirection.keys -> {
+                    viewModel.onCaretMovement(arrowEventToDirection[keyEvent.key]!!)
                 }
 
                 Key.Backspace -> {
-                    if (caret != 0) {
-                        textBuffer.delete(caret - 1)
-                        caret--
-                        text = textBuffer.getText()
-                    }
+                    viewModel.onTextDeletion()
                 }
             }
+
             when (keyEvent.utf16CodePoint) {
-                // TODO: move ranges & constants to separate class
-                in 9..126 -> { // ASCII symbols
-                    textBuffer.add(keyEvent.utf16CodePoint.toChar(), caret)
-                    caret++
-                    text = textBuffer.getText()
-                    println(text)
+                in ASCII_RANGE -> {
+                    viewModel.onCharInsertion(keyEvent.utf16CodePoint.toChar())
                 }
             }
         }
@@ -101,6 +57,7 @@ class App {
     @Composable
     @Preview
     fun run() {
+        val text by viewModel._model.text
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }
@@ -121,7 +78,7 @@ class App {
                             style = textStyle
                         )
                         val lines = it.split("\n")
-                        val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
+                        val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
                         val caretY = charHeight * caretLine.toFloat()
                         var caretX = 0f
@@ -154,22 +111,6 @@ class App {
                 }
             }
         }
-    }
-
-    private fun calculateCaretLineAndPos(lines: List<String>): Pair<Int, Int> {
-        var caretLine = 0
-        var caretPos = 0
-        var posCounter = 0
-        for ((index, line) in lines.withIndex()) {
-            posCounter += line.length + 1
-            if (caret < posCounter) {
-                caretLine = index
-                caretPos = if (index == 0) caret else caret - posCounter + line.length + 1
-                break
-            }
-        }
-
-        return Pair(caretLine, caretPos)
     }
 }
 
