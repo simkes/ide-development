@@ -27,8 +27,9 @@ import kotlinx.coroutines.delay
 import kotlin.math.max
 import kotlin.math.min
 
+
 class App {
-    private val viewModel: EditorViewModel = EditorViewModelImpl()
+    private val viewModel = EditorViewModelImpl
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
@@ -57,7 +58,7 @@ class App {
     @Composable
     @Preview
     fun run() {
-        val text by viewModel._model.text
+        val text by viewModel.text
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }

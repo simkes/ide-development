@@ -4,12 +4,12 @@ import Direction
 import kotlin.math.min
 
 
-class EditorViewModelImpl : EditorViewModel {
-    override val _model = SimpleArrayTextBuffer()
+object EditorViewModelImpl {
+    val _model = SimpleArrayTextBuffer()
 
     private var caret = 0
 
-    override fun onCaretMovement(direction: Direction, step: Int) {
+    fun onCaretMovement(direction: Direction, step: Int = 1) {
         when (direction) {
             Direction.UP -> {
                 val lines = _model.getText().split("\n")
@@ -36,16 +36,16 @@ class EditorViewModelImpl : EditorViewModel {
         }
     }
 
-    override fun onCharInsertion(char: Char) {
+    fun onCharInsertion(char: Char) {
         _model.add(char, caret)
         caret++
     }
 
-    override fun getCaret(): Pair<Int, Int> {
+    fun getCaret(): Pair<Int, Int> {
         return calculateCaretLineAndPos(_model.getText().split("\n"))
     }
 
-    override fun onTextDeletion(step: Int) {
+    fun onTextDeletion(step: Int = 1) {
         repeat(step) {
             if (caret != 0) {
                 _model.delete(caret - 1)
@@ -69,4 +69,6 @@ class EditorViewModelImpl : EditorViewModel {
 
         return Pair(caretLine, caretPos)
     }
+
+    val text get() = _model.text
 }
