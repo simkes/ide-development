@@ -43,6 +43,10 @@ class App {
                 Key.Backspace -> {
                     viewModel.onTextDeletion()
                 }
+
+                Key.Enter -> {
+                    viewModel.onNewline()
+                }
             }
 
             when (keyEvent.utf16CodePoint) {

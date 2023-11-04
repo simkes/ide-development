@@ -1,74 +1,83 @@
 package editor
 
 import Direction
-import kotlin.math.min
-
 
 object EditorViewModel {
-    val _model = SimpleArrayTextBuffer()
+    private val _currentDocument: Document = DocumentImpl()
 
-    private var caret = 0
+    private var caretOffset = 0
+    private var caretLine = 0
 
-    fun onCaretMovement(direction: Direction, step: Int = 1) {
+    private var lineStartOffset = 0
+    private var lineEndOffset = 0
+
+    private val lineLength get() = lineEndOffset - lineStartOffset
+
+    fun onCaretMovement(direction: Direction) {
         when (direction) {
             Direction.UP -> {
-                val lines = _model.getText().split("\n")
-                val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
-                if (caretLine > 0) {
-                    val prevLine = lines[caretLine - 1]
-                    caret -= caretPos + 1 + prevLine.length
-                    caret += min(caretPos, prevLine.length)
+                val prevLine = caretLine
+                val relativeCaretOffset = caretOffset - lineStartOffset
+                caretLine = maxOf(0, caretLine - 1)
+                if (caretLine != prevLine) {
+                    updateLine()
+                    caretOffset = minOf(lineStartOffset + relativeCaretOffset, lineEndOffset)
                 }
             }
 
             Direction.DOWN -> {
-                val lines = _model.getText().split("\n")
-                val (caretLine, caretPos) = calculateCaretLineAndPos(lines)
-                if (caretLine < lines.size - 1) {
-                    val nextLine = lines[caretLine + 1]
-                    caret += lines[caretLine].length - caretPos + 1
-                    caret += min(caretPos, nextLine.length)
+                val prevLine = caretLine
+                val relativeCaretOffset = caretOffset - lineStartOffset
+                caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
+                if (caretLine != prevLine) {
+                    updateLine()
+                    caretOffset = minOf(lineStartOffset + relativeCaretOffset, lineEndOffset)
                 }
             }
 
-            Direction.LEFT -> caret = maxOf(caret - 1, 0)
-            Direction.RIGHT -> caret = minOf(caret + 1, _model.getText().length)
+            Direction.LEFT -> {
+                caretOffset = maxOf(caretOffset - 1, 0)
+                if (caretOffset < lineStartOffset) {
+                    caretLine = maxOf(0, caretLine - 1)
+                    updateLine()
+                }
+            }
+
+            Direction.RIGHT -> {
+                caretOffset = minOf(caretOffset + 1, _currentDocument.text.length)
+                if (caretOffset > lineEndOffset) {
+                    caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
+                    updateLine()
+                }
+            }
         }
     }
 
     fun onCharInsertion(char: Char) {
-        _model.add(char, caret)
-        caret++
+        _currentDocument.insertChar(char, caretOffset)
+        caretOffset++
     }
 
-    fun getCaret(): Pair<Int, Int> {
-        return calculateCaretLineAndPos(_model.getText().split("\n"))
-    }
+    fun getCaret(): Pair<Int, Int> = Pair(caretLine, caretOffset - lineStartOffset)
 
     fun onTextDeletion(step: Int = 1) {
         repeat(step) {
-            if (caret != 0) {
-                _model.delete(caret - 1)
-                caret--
+            if (caretOffset != 0) {
+                _currentDocument.removeChar(caretOffset - 1)
+                caretOffset--
             }
         }
     }
 
-    private fun calculateCaretLineAndPos(lines: List<String>): Pair<Int, Int> {
-        var caretLine = 0
-        var caretPos = 0
-        var posCounter = 0
-        for ((index, line) in lines.withIndex()) {
-            posCounter += line.length + 1
-            if (caret < posCounter) {
-                caretLine = index
-                caretPos = if (index == 0) caret else caret - posCounter + line.length + 1
-                break
-            }
-        }
-
-        return Pair(caretLine, caretPos)
+    fun onNewline() {
+        caretLine++
+        updateLine()
     }
 
-    val text get() = _model.text
+    private fun updateLine() {
+        val (start, end) = _currentDocument.getLineOffsets(caretLine)
+        lineStartOffset = start; lineEndOffset = end
+    }
+
+    val text get() = _currentDocument.observableText
 }
