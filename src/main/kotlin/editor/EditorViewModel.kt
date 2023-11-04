@@ -4,7 +4,7 @@ import Direction
 import kotlin.math.min
 
 
-object EditorViewModelImpl {
+object EditorViewModel {
     val _model = SimpleArrayTextBuffer()
 
     private var caret = 0

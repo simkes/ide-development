@@ -29,7 +29,7 @@ import kotlin.math.min
 
 
 class App {
-    private val viewModel = EditorViewModelImpl
+    private val viewModel = EditorViewModel
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
