@@ -110,9 +110,22 @@ class App {
                         }
 
                         translate(
-                            50f - horizontalScrollState.value,
-                            50f - verticalScrollState.value
+                            60f - horizontalScrollState.value,
+                            60f - verticalScrollState.value
                         ) {
+                            // drawing line numbers
+                            for ((index, line) in lines.withIndex()) {
+                                val lineNumberString = AnnotatedString((index + 1).toString())
+                                val lineNumberLayout = textMeasurer.measure(
+                                    lineNumberString,
+                                    style = textStyle.copy(color = Color.Gray)
+                                )
+                                drawText(
+                                    lineNumberLayout,
+                                    topLeft = Offset(-55f, (index * charHeight).toFloat())
+                                )
+                            }
+
                             drawText(measuredText)
 
                             if (caretVisible.value) {
