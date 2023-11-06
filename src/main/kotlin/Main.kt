@@ -3,9 +3,9 @@
 )
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
@@ -66,6 +66,10 @@ class App {
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }
+
+        val horizontalScrollState = rememberScrollState(0)
+        val verticalScrollState = rememberScrollState(0)
+
         LaunchedEffect(Unit) {
             while (true) {
                 caretVisible.value = !caretVisible.value
@@ -74,8 +78,13 @@ class App {
         }
         MaterialTheme {
             Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }) {
-                Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
-                    .focusRequester(requester).fillMaxSize()) {
+                Canvas(modifier = Modifier.focusable(true)
+                    .clickable { requester.requestFocus() }
+                    .focusRequester(requester)
+                    .fillMaxSize()
+                    .scrollable(verticalScrollState, Orientation.Vertical)
+                    .scrollable(horizontalScrollState, Orientation.Horizontal)
+                ) {
                     text.let {
                         val textStyle = TextStyle(fontSize = 20.sp)
                         val measuredText = textMeasurer.measure(
@@ -100,7 +109,10 @@ class App {
                             ).size.width.toFloat()
                         }
 
-                        translate(50f, 50f) {
+                        translate(
+                            50f - horizontalScrollState.value,
+                            50f - verticalScrollState.value
+                        ) {
                             drawText(measuredText)
 
                             if (caretVisible.value) {
@@ -117,6 +129,7 @@ class App {
             }
         }
     }
+
 }
 
 fun main() {
