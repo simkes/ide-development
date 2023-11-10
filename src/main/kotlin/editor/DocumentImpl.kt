@@ -2,8 +2,8 @@ package editor
 
 import androidx.compose.runtime.mutableStateOf
 
-class DocumentImpl : Document {
-    private val _text: TextBuffer = SimpleArrayTextBuffer()
+class DocumentImpl(initialText: String = "") : Document {
+    private val _text: TextBuffer = SimpleArrayTextBuffer(initialText)
 
     override val observableText = mutableStateOf(_text.getText())
 

@@ -1,9 +1,18 @@
 package editor
 
 import Direction
+import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import vfs.VirtualFileSystem
+import vfs.VirtualFileSystemImpl
+import java.nio.file.Path
 
 object EditorViewModel {
-    private val _currentDocument: Document = DocumentImpl()
+    // TODO: context object to receive control objects (Project?)
+    private var _currentDocument: Document = DocumentImpl()
+    private val documentManager: DocumentManager = DocumentManagerImpl()
+    private val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl()
 
     private var caretOffset = 0
     private var caretLine = 0
@@ -53,6 +62,13 @@ object EditorViewModel {
         }
     }
 
+    fun onFileOpening(filePath: String) {
+        val path = Path.of(filePath)
+        val virtualFile = virtualFileSystem.getFileByPath(path)
+        _currentDocument = documentManager.openDocument(virtualFile)
+        text.update { _currentDocument.observableText }
+    }
+
     fun onCharInsertion(char: Char) {
         _currentDocument.insertChar(char, caretOffset)
         caretOffset++
@@ -79,5 +95,5 @@ object EditorViewModel {
         lineStartOffset = start; lineEndOffset = end
     }
 
-    val text get() = _currentDocument.observableText
+    var text = MutableStateFlow(_currentDocument.observableText)
 }
