@@ -23,13 +23,22 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import editor.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import ui.*
 import kotlin.math.max
 import kotlin.math.min
 
 
 class App {
     private val viewModel = EditorViewModel
+    @OptIn(DelicateCoroutinesApi::class)
+    private val eventProcessor = UiEventProcessor(GlobalScope)
+
+    init {
+        eventProcessor.startEventProcessing()
+    }
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
@@ -37,21 +46,21 @@ class App {
             println(keyEvent.key)
             when (keyEvent.key) {
                 in arrowEventToDirection.keys -> {
-                    viewModel.onCaretMovement(arrowEventToDirection[keyEvent.key]!!)
+                    eventProcessor.newEvent(ArrowKeyEvent(keyEvent.key))
                 }
 
                 Key.Backspace -> {
-                    viewModel.onTextDeletion()
+                    eventProcessor.newEvent(BackspaceKeyEvent())
                 }
 
                 Key.Enter -> {
-                    viewModel.onNewline()
+                    eventProcessor.newEvent(NewlineKeyEvent())
                 }
             }
 
             when (keyEvent.utf16CodePoint) {
                 in ASCII_RANGE -> {
-                    viewModel.onCharInsertion(keyEvent.utf16CodePoint.toChar())
+                    eventProcessor.newEvent(TextInsertionEvent(keyEvent.utf16CodePoint.toChar().toString()))
                 }
             }
         }
@@ -62,7 +71,7 @@ class App {
     @Composable
     @Preview
     fun run() {
-        val text by viewModel.text
+        val text by viewModel.text.collectAsState()
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }
@@ -79,10 +88,10 @@ class App {
                     text.let {
                         val textStyle = TextStyle(fontSize = 20.sp)
                         val measuredText = textMeasurer.measure(
-                            AnnotatedString(it),
+                            AnnotatedString(it.value),
                             style = textStyle
                         )
-                        val lines = it.split("\n")
+                        val lines = it.value.split("\n")
                         val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
                         val caretY = charHeight * caretLine.toFloat()
