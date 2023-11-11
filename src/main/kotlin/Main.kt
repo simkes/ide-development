@@ -40,6 +40,10 @@ class App {
         eventProcessor.startEventProcessing()
     }
 
+    fun stopEventProcessor() {
+        eventProcessor.stopEventProcessing()
+    }
+
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
         if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
@@ -131,7 +135,10 @@ class App {
 fun main() {
     val app = App()
     application {
-        Window(onCloseRequest = ::exitApplication) {
+        Window(onCloseRequest = {
+            exitApplication()
+            app.stopEventProcessor()
+        }) {
             app.run()
         }
     }
