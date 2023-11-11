@@ -25,15 +25,28 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import editor.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import java.awt.FileDialog
 import java.awt.Frame
+import ui.*
 import kotlin.math.max
 import kotlin.math.min
 
 
 class App {
     private val viewModel = EditorViewModel
+    @OptIn(DelicateCoroutinesApi::class)
+    private val eventProcessor = UiEventProcessor(GlobalScope)
+
+    init {
+        eventProcessor.startEventProcessing()
+    }
+
+    fun stopEventProcessor() {
+        eventProcessor.stopEventProcessing()
+    }
 
     @OptIn(ExperimentalComposeUiApi::class)
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
@@ -41,21 +54,21 @@ class App {
             println(keyEvent.key)
             when (keyEvent.key) {
                 in arrowEventToDirection.keys -> {
-                    viewModel.onCaretMovement(arrowEventToDirection[keyEvent.key]!!)
+                    eventProcessor.newEvent(ArrowKeyEvent(keyEvent.key))
                 }
 
                 Key.Backspace -> {
-                    viewModel.onTextDeletion()
+                    eventProcessor.newEvent(BackspaceKeyEvent())
                 }
 
                 Key.Enter -> {
-                    viewModel.onNewline()
+                    eventProcessor.newEvent(NewlineKeyEvent())
                 }
             }
 
             when (keyEvent.utf16CodePoint) {
                 in ASCII_RANGE -> {
-                    viewModel.onCharInsertion(keyEvent.utf16CodePoint.toChar())
+                    eventProcessor.newEvent(TextInsertionEvent(keyEvent.utf16CodePoint.toChar().toString()))
                 }
             }
         }
@@ -147,7 +160,10 @@ class App {
 fun main() {
     val app = App()
     application {
-        Window(onCloseRequest = ::exitApplication) {
+        Window(onCloseRequest = {
+            exitApplication()
+            app.stopEventProcessor()
+        }) {
             app.run()
         }
     }

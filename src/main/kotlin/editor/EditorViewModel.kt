@@ -74,6 +74,11 @@ object EditorViewModel {
         caretOffset++
     }
 
+    fun onTextInsertion(text: String) {
+        _currentDocument.insertText(text, caretOffset)
+        caretOffset += text.length
+    }
+
     fun getCaret(): Pair<Int, Int> = Pair(caretLine, caretOffset - lineStartOffset)
 
     fun onTextDeletion(step: Int = 1) {
