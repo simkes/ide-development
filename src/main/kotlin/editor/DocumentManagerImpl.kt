@@ -12,7 +12,7 @@ class DocumentManagerImpl : DocumentManager {
             return fileToDoc[virtualFile]!!
         }
 
-        val document = DocumentImpl(virtualFile.getBinaryContent().toString())
+        val document = DocumentImpl(virtualFile.getBinaryContent().decodeToString())
         fileToDoc[virtualFile] = document
         docToFile[document] = virtualFile
 
