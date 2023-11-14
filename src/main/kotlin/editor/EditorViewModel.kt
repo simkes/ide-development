@@ -1,7 +1,6 @@
 package editor
 
 import Direction
-import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import vfs.VirtualFileSystem
@@ -14,49 +13,53 @@ object EditorViewModel {
     private val documentManager: DocumentManager = DocumentManagerImpl()
     private val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl()
 
-    private var caretOffset = 0
     private var caretLine = 0
-
     private var lineStartOffset = 0
-    private var lineEndOffset = 0
 
+    private var lineEndOffset = 0
     private val lineLength get() = lineEndOffset - lineStartOffset
+
+    private val caretOffset get() = minOf(lineStartOffset + rememberedOffset, lineEndOffset)
+    private var rememberedOffset: Int = 0
+        set(offset) {
+            field = relative(offset)
+        }
+
+    private fun relative(offset: Int) = offset - lineStartOffset
 
     fun onCaretMovement(direction: Direction) {
         when (direction) {
             Direction.UP -> {
                 val prevLine = caretLine
-                val relativeCaretOffset = caretOffset - lineStartOffset
                 caretLine = maxOf(0, caretLine - 1)
                 if (caretLine != prevLine) {
                     updateLine()
-                    caretOffset = minOf(lineStartOffset + relativeCaretOffset, lineEndOffset)
                 }
             }
 
             Direction.DOWN -> {
                 val prevLine = caretLine
-                val relativeCaretOffset = caretOffset - lineStartOffset
                 caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
                 if (caretLine != prevLine) {
                     updateLine()
-                    caretOffset = minOf(lineStartOffset + relativeCaretOffset, lineEndOffset)
                 }
             }
 
             Direction.LEFT -> {
-                caretOffset = maxOf(caretOffset - 1, 0)
-                if (caretOffset < lineStartOffset) {
+                rememberedOffset = maxOf(0, caretOffset - 1)
+                if (lineStartOffset + rememberedOffset < lineStartOffset) {
                     caretLine = maxOf(0, caretLine - 1)
                     updateLine()
+                    rememberedOffset = lineEndOffset
                 }
             }
 
             Direction.RIGHT -> {
-                caretOffset = minOf(caretOffset + 1, _currentDocument.text.length)
-                if (caretOffset > lineEndOffset) {
+                rememberedOffset = minOf(text.value.value.length, caretOffset + 1)
+                if (lineStartOffset + rememberedOffset > lineEndOffset) {
                     caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
                     updateLine()
+                    rememberedOffset = lineStartOffset
                 }
             }
         }
@@ -71,22 +74,33 @@ object EditorViewModel {
 
     fun onCharInsertion(char: Char) {
         _currentDocument.insertChar(char, caretOffset)
-        caretOffset++
+        updateLine()
+        rememberedOffset = minOf(lineEndOffset, caretOffset) + 1
     }
 
     fun onTextInsertion(text: String) {
         _currentDocument.insertText(text, caretOffset)
-        caretOffset += text.length
         updateLine()
+        rememberedOffset = minOf(lineEndOffset, caretOffset) + text.length
     }
 
-    fun getCaret(): Pair<Int, Int> = Pair(caretLine, caretOffset - lineStartOffset)
+    fun getCaret(): Pair<Int, Int> = Pair(caretLine, relative(caretOffset))
 
     fun onTextDeletion(step: Int = 1) {
         repeat(step) {
             if (caretOffset != 0) {
                 _currentDocument.removeChar(caretOffset - 1)
-                caretOffset--
+                rememberedOffset = maxOf(lineStartOffset, caretOffset) - 1
+                if (rememberedOffset == -1) {
+                    val prevLine = caretLine
+                    caretLine = maxOf(0, caretLine - 1)
+                    rememberedOffset = if (caretLine != prevLine) {
+                        updateLine()
+                        lineEndOffset
+                    } else {
+                        0
+                    }
+                }
             }
         }
     }
@@ -94,6 +108,7 @@ object EditorViewModel {
     fun onNewline() {
         caretLine++
         updateLine()
+        rememberedOffset = lineStartOffset
     }
 
     private fun updateLine() {
@@ -102,4 +117,14 @@ object EditorViewModel {
     }
 
     var text = MutableStateFlow(_currentDocument.observableText)
+
+    // TODO: test only
+    fun purge() {
+        _currentDocument = DocumentImpl()
+        caretLine = 0
+        lineStartOffset = 0
+        lineEndOffset = 0
+        rememberedOffset = 0
+        text.update { _currentDocument.observableText }
+    }
 }
