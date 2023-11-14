@@ -4,8 +4,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
 
-class SimpleArrayTextBuffer : TextBuffer {
-    private val _text = ArrayList<Char>()
+class SimpleArrayTextBuffer(initialText: String = "") : TextBuffer {
+    private val _text: ArrayList<Char> = initialText.toCollection(ArrayList())
 
     override val lineCount: Int get() = _text.count { it == '\n'}
     override val size: Int get() = _text.size
