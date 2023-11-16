@@ -1,4 +1,4 @@
-package language
+package language.lexer
 
 class Lexer(private val input: String) {
     private var currentIndex = 0
@@ -42,8 +42,8 @@ class Lexer(private val input: String) {
             sb.append(nextChar())
         }
         return when (val str = sb.toString()) {
-            TRUE -> BoolTrueToken
-            FALSE -> BoolFalseToken
+            TRUE -> BoolToken(true)
+            FALSE -> BoolToken(false)
             in keywordToToken -> keywordToToken.getValue(str)
             else -> IdentifierToken(str)
         }
