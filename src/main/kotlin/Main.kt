@@ -69,10 +69,6 @@ class App {
                 Key.Enter -> {
                     eventProcessor.newEvent(NewlineKeyEvent())
                 }
-
-                Key.P -> {
-                    eventProcessor.newEvent(PrintRequestEvent())
-                }
             }
 
             when (keyEvent.utf16CodePoint) {
