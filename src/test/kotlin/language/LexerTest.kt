@@ -6,17 +6,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class LexerTest {
-    private fun compare(token1: Token, token2: Token): Boolean {
-        if (token1::class != token2::class) return false
-        return when (token1) {
-            is IdentifierToken -> token1.name == (token2 as IdentifierToken).name
-            is ConstantToken -> token1.value == (token2 as ConstantToken).value
-            is StringLiteralToken -> token1.value == (token2 as StringLiteralToken).value
-            is BoolToken -> token1.value == (token2 as BoolToken).value
-            is NumericRelationOpToken -> token1.operatorSymbol == (token2 as NumericRelationOpToken).operatorSymbol
-            else -> true
-        }
-    }
     private fun runTest(input: String, expectedTokens: List<Token>) {
         val lexer = Lexer(input)
         val actualTokens = lexer.tokenize()

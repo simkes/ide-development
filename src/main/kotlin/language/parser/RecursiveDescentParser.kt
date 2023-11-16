@@ -179,6 +179,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
                 consumeToken(RightParenToken)
                 expr
             }
+
             is OpToken -> Expr.UnaryOp(token, factor())
             else -> throw IllegalStateException("Empty expression factor?")
         }
@@ -200,10 +201,10 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     }
 
     private fun expression(priority: Int = EXPR_PRIORITY): Expr {
-        if(priority == FACTOR_PRIORITY)
+        if (priority == FACTOR_PRIORITY)
             return factor()
         var curExpr = expression(priority + 1)
-        while(getPriority(peekOp()) == priority) {
+        while (getPriority(peekOp()) == priority) {
             val op = nextOp()
             val nextExpr = expression(priority + 1)
             curExpr = Expr.BinaryOp(op, curExpr, nextExpr)
@@ -244,18 +245,17 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
 
     companion object {
         private const val EXPR_PRIORITY = 0
-        private const val FACTOR_PRIORITY = 2
+        private const val FACTOR_PRIORITY = 5
         private fun getPriority(token: Token?): Int {
             return when (token) {
-                is PlusOpToken -> 0
-                is MinusOpToken -> 0
-                is StringOpToken -> 0
                 is OrOpToken -> 0
-                is RelationalOpToken -> 0
-                is MulOpToken -> 1
-                is DivOpToken -> 1
                 is AndOpToken -> 1
-                is NotEqOpToken -> 1
+                is RelationalOpToken -> 2
+                is PlusOpToken -> 3
+                is MinusOpToken -> 3
+                is StringOpToken -> 3
+                is MulOpToken -> 4
+                is DivOpToken -> 4
                 else -> -1
             }
         }
