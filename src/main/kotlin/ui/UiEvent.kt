@@ -9,6 +9,7 @@ import editor.EditorViewModel
  * Base interface for all events that are caused by UI and need to update the model.
  */
 interface UiEvent {
+    // TODO: dispatcher accessor
     suspend fun process()
 }
 
@@ -34,5 +35,11 @@ class NewlineKeyEvent : UiEvent {
 class BackspaceKeyEvent : UiEvent {
     override suspend fun process() {
         EditorViewModel.onTextDeletion()
+    }
+}
+
+class FileSaveRequestEvent : UiEvent {
+    override suspend fun process() {
+        EditorViewModel.onFileSave()
     }
 }

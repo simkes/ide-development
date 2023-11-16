@@ -1,16 +1,28 @@
 package editor
 
 import Direction
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.*
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
 import java.nio.file.Path
 
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
-    private var _currentDocument: Document = DocumentImpl()
-    private val documentManager: DocumentManager = DocumentManagerImpl()
+    var text = mutableStateOf("")
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private val scope = GlobalScope
+
+    private var _currentDocument: Document = DocumentImpl().also {
+        scope.launch(Dispatchers.IO) {
+            it.observableText.collect {
+                text.value = it
+            }
+        }
+    }
+
+    private val documentManager: DocumentManager = DocumentManagerImpl(scope)
     private val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl()
 
     private var caretLine = 0
@@ -55,7 +67,7 @@ object EditorViewModel {
             }
 
             Direction.RIGHT -> {
-                rememberedOffset = minOf(text.value.value.length, caretOffset + 1)
+                rememberedOffset = minOf(text.value.length, caretOffset + 1)
                 if (lineStartOffset + rememberedOffset > lineEndOffset) {
                     caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
                     updateLine()
@@ -69,7 +81,12 @@ object EditorViewModel {
         val path = Path.of(filePath)
         val virtualFile = virtualFileSystem.getFileByPath(path)
         _currentDocument = documentManager.openDocument(virtualFile)
-        text.update { _currentDocument.observableText }
+
+        scope.launch(Dispatchers.IO) {
+            _currentDocument.observableText.collect {
+                text.value = it
+            }
+        }
     }
 
     fun onCharInsertion(char: Char) {
@@ -111,12 +128,14 @@ object EditorViewModel {
         rememberedOffset = lineStartOffset
     }
 
+    fun onFileSave() {
+        documentManager.saveDocument(_currentDocument)
+    }
+
     private fun updateLine() {
         val (start, end) = _currentDocument.getLineOffsets(caretLine)
         lineStartOffset = start; lineEndOffset = end
     }
-
-    var text = MutableStateFlow(_currentDocument.observableText)
 
     // TODO: test only
     fun purge() {
@@ -125,6 +144,6 @@ object EditorViewModel {
         lineStartOffset = 0
         lineEndOffset = 0
         rememberedOffset = 0
-        text.update { _currentDocument.observableText }
+        text.value = ""
     }
 }

@@ -1,8 +1,11 @@
 package editor
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import vfs.VirtualFile
 
-class DocumentManagerImpl : DocumentManager {
+class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
     // TODO: bidi map
     private val fileToDoc: MutableMap<VirtualFile, Document> = emptyMap<VirtualFile, Document>().toMutableMap()
     private val docToFile: MutableMap<Document, VirtualFile> = emptyMap<Document, VirtualFile>().toMutableMap()
@@ -13,6 +16,14 @@ class DocumentManagerImpl : DocumentManager {
         }
 
         val document = DocumentImpl(virtualFile.getBinaryContent().decodeToString())
+
+        scope.launch(Dispatchers.IO) {
+            virtualFile.subscribe(document.observableText)
+        }
+        scope.launch {
+            document.subscribe(virtualFile.contentsFlow)
+        }
+
         fileToDoc[virtualFile] = document
         docToFile[document] = virtualFile
 
@@ -21,7 +32,7 @@ class DocumentManagerImpl : DocumentManager {
 
     override fun saveDocument(document: Document) {
         val virtualFile = docToFile[document] ?: (TODO("File relation is missing?"))
-        virtualFile.setBinaryContent(document.text.toByteArray())
+        virtualFile.setBinaryContent(document.observableText.value.toByteArray())
     }
     override fun saveDocuments() {}
     override fun closeDocument() {

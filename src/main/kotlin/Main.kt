@@ -52,6 +52,11 @@ class App {
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
         if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
             println(keyEvent.key)
+            if (keyEvent.isCtrlPressed && keyEvent.key == Key.S) {
+                eventProcessor.newEvent(FileSaveRequestEvent()) // TODO: multiple files
+                return true
+            }
+
             when (keyEvent.key) {
                 in arrowEventToDirection.keys -> {
                     eventProcessor.newEvent(ArrowKeyEvent(keyEvent.key))
@@ -63,6 +68,10 @@ class App {
 
                 Key.Enter -> {
                     eventProcessor.newEvent(NewlineKeyEvent())
+                }
+
+                Key.P -> {
+                    eventProcessor.newEvent(PrintRequestEvent())
                 }
             }
 
@@ -91,7 +100,7 @@ class App {
             fileChooseDialogVisible.value = false
         }
 
-        val text by viewModel.text.collectAsState()
+        val text by viewModel.text
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }
@@ -112,10 +121,10 @@ class App {
                     text.let {
                         val textStyle = TextStyle(fontSize = 20.sp)
                         val measuredText = textMeasurer.measure(
-                            AnnotatedString(it.value),
+                            AnnotatedString(it),
                             style = textStyle
                         )
-                        val lines = it.value.split("\n")
+                        val lines = it.split("\n")
                         val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
                         val caretY = charHeight * caretLine.toFloat()
