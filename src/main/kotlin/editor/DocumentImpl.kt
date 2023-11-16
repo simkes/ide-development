@@ -1,11 +1,12 @@
 package editor
 
-import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.*
 
 class DocumentImpl(initialText: String = "") : Document {
-    private val _text: TextBuffer = SimpleArrayTextBuffer(initialText)
+    private var _text: TextBuffer = SimpleArrayTextBuffer(initialText)
 
-    override val observableText = mutableStateOf(_text.getText())
+    private val mutableText = MutableStateFlow(_text.getText())
+    override val observableText: StateFlow<String> = mutableText.asStateFlow()
 
     override fun insertChar(char: Char, offset: Int) {
         modifying {
@@ -26,8 +27,16 @@ class DocumentImpl(initialText: String = "") : Document {
 
     override fun getLineCount() = _text.lineCount
 
+    override suspend fun subscribe(flow: StateFlow<ByteArray>) {
+        flow.collect {ba ->
+            mutableText.update { ba.decodeToString() }
+            _text = SimpleArrayTextBuffer(ba.decodeToString())
+            println("Updated contents of the document")
+        }
+    }
+
     private inline /* TODO: inline meaningful? */ fun modifying(function: () -> Unit) {
         function()
-        observableText.value = _text.getText()
+        mutableText.update { _text.getText() }
     }
 }
