@@ -1,6 +1,9 @@
 package language.lexer
 
 class Lexer(private val input: String) {
+    var parsedWithError = false
+        private set
+
     private var currentIndex = 0
 
     fun tokenize(): List<Token> {
@@ -13,7 +16,11 @@ class Lexer(private val input: String) {
                 char.isLetter() -> tokens.add(recognizeWord())
                 char == QUOTE -> tokens.add(recognizeStringLiteral())
                 isSpecialSymbol(char) -> tokens.add(recognizeSpecialSymbol())
-                else -> throw IllegalArgumentException("Unexpected character '$char' at position $currentIndex.")
+                else -> {
+                    parsedWithError = true
+                    tokens.add(UnrecognizedToken("Unexpected character '$char' at position $currentIndex."))
+                    skipToNextToken()
+                }
             }
             skipWhitespace()
         }
@@ -24,6 +31,12 @@ class Lexer(private val input: String) {
     private fun nextChar(): Char = if (currentIndex < input.length) input[currentIndex++] else 0.toChar()
     private fun skipWhitespace() {
         while (currentIndex < input.length && peek().isWhitespace()) {
+            currentIndex++
+        }
+    }
+
+    private fun skipToNextToken() {
+        while(currentIndex < input.length && !peek().isWhitespace()){
             currentIndex++
         }
     }
@@ -49,7 +62,7 @@ class Lexer(private val input: String) {
         }
     }
 
-    private fun recognizeStringLiteral(): StringLiteralToken {
+    private fun recognizeStringLiteral(): Token {
         val sb = StringBuilder()
         nextChar()
         while (currentIndex < input.length && peek() != QUOTE) {
@@ -58,7 +71,8 @@ class Lexer(private val input: String) {
         if (currentIndex < input.length && peek() == QUOTE) {
             nextChar()
         } else {
-            throw IllegalArgumentException("Expected $QUOTE at position $currentIndex.")
+            parsedWithError = true
+            return UnrecognizedToken("Expected '$QUOTE'.")
         }
         return StringLiteralToken(sb.toString())
     }
@@ -72,7 +86,12 @@ class Lexer(private val input: String) {
             }
         }
         val char = nextChar().toString()
-        return specialSymbolToToken[char]
-            ?: throw IllegalArgumentException("Unexpected character '$char' at position ${currentIndex - 1}.")
+        if (specialSymbolToToken.containsKey(char))
+            return specialSymbolToToken.getValue(char)
+
+        parsedWithError = true
+        val pos = currentIndex - 1
+        skipToNextToken()
+        return UnrecognizedToken("Unexpected character '$char' at position $pos.")
     }
 }

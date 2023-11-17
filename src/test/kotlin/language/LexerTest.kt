@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class LexerTest {
-    private fun runTest(input: String, expectedTokens: List<Token>) {
+    private fun runTest(input: String, expectedTokens: List<Token>, parsedWithError: Boolean = false) {
         val lexer = Lexer(input)
         val actualTokens = lexer.tokenize()
         assertEquals(expectedTokens.size, actualTokens.size, "Size mismatch.")
@@ -16,6 +16,7 @@ class LexerTest {
                 "Actual $actual does not match expected $expected at position $index."
             )
         }
+        assertEquals(parsedWithError, lexer.parsedWithError)
     }
 
     @Test
@@ -373,5 +374,50 @@ class LexerTest {
             )
         )
     }
+
+    @Test
+    @DisplayName("Test tokenization of function declaration with error")
+    fun testFunctionBadDeclaration() {
+        runTest(
+            input = "func add(a: number, b: number) & return a _ b; }",
+            expectedTokens = listOf(
+                FuncKeywordToken,
+                IdentifierToken("add"),
+                LeftParenToken,
+                IdentifierToken("a"),
+                ColonToken,
+                NumberTypeToken,
+                CommaToken,
+                IdentifierToken("b"),
+                ColonToken,
+                NumberTypeToken,
+                RightParenToken,
+                UnrecognizedToken("Unexpected character '&' at position 31."),
+                ReturnKeywordToken,
+                IdentifierToken("a"),
+                UnrecognizedToken("Unexpected character '_' at position 42."),
+                IdentifierToken("b"),
+                SemicolonToken,
+                RightBraceToken
+            ),
+            parsedWithError = true
+        )
+    }
+
+    @Test
+    @DisplayName("Test tokenization of string without quote")
+    fun testStringWithoutQuote() {
+        runTest(
+            input = """var greeting = "Hello, IDELang!;""",
+            expectedTokens = listOf(
+                VarKeywordToken,
+                IdentifierToken("greeting"),
+                AssignToken,
+                UnrecognizedToken("Expected '$QUOTE'.")
+            ),
+            parsedWithError = true
+        )
+    }
+
 }
 

@@ -109,3 +109,4 @@ val keywordToToken = mapOf(
     "bool" to BoolTypeToken
 )
 
+data class UnrecognizedToken(val errorMessage: String) : Token()
