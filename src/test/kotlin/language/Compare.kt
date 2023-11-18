@@ -12,6 +12,7 @@ fun compare(token1: Token, token2: Token): Boolean {
         is StringLiteralToken -> token1.value == (token2 as StringLiteralToken).value
         is BoolToken -> token1.value == (token2 as BoolToken).value
         is NumericRelationOpToken -> token1.operatorSymbol == (token2 as NumericRelationOpToken).operatorSymbol
+        is UnrecognizedToken -> token1.errorMessage == (token2 as UnrecognizedToken).errorMessage
         else -> true
     }
 }
@@ -40,6 +41,7 @@ fun compare(node1: ASTNode?, node2: ASTNode?): Boolean {
         is Stmt.ReturnStatement -> compareReturnStatement(node1, node2 as Stmt.ReturnStatement)
         is Stmt.ProcDeclaration -> compareProcDeclaration(node1, node2 as Stmt.ProcDeclaration)
         is Stmt.ProcCall -> compareProcCall(node1, node2 as Stmt.ProcCall)
+        is Stmt.InvalidStatement -> compareInvalidStatement(node1, node2 as Stmt.InvalidStatement)
         is Parameter -> compareParameter(node1, node2 as Parameter)
         is Expr.BinaryOp -> compareBinaryOp(node1, node2 as Expr.BinaryOp)
         is Expr.UnaryOp -> compareUnaryOp(node1, node2 as Expr.UnaryOp)
@@ -133,4 +135,8 @@ fun compareStringLiteral(node1: Expr.StringLiteral, node2: Expr.StringLiteral): 
 
 fun compareConstant(node1: Expr.Constant, node2: Expr.Constant): Boolean {
     return node1.value == node2.value
+}
+
+fun compareInvalidStatement(node1: Stmt.InvalidStatement, node2: Stmt.InvalidStatement): Boolean {
+    return node1.errorMessage == node2.errorMessage
 }

@@ -1,7 +1,7 @@
 package language.lexer
 
 class Lexer(private val input: String) {
-    var parsedWithError = false
+    var tokenizedWithError = false
         private set
 
     private var currentIndex = 0
@@ -17,7 +17,7 @@ class Lexer(private val input: String) {
                 char == QUOTE -> tokens.add(recognizeStringLiteral())
                 isSpecialSymbol(char) -> tokens.add(recognizeSpecialSymbol())
                 else -> {
-                    parsedWithError = true
+                    tokenizedWithError = true
                     tokens.add(UnrecognizedToken("Unexpected character '$char' at position $currentIndex."))
                     skipToNextToken()
                 }
@@ -71,7 +71,7 @@ class Lexer(private val input: String) {
         if (currentIndex < input.length && peek() == QUOTE) {
             nextChar()
         } else {
-            parsedWithError = true
+            tokenizedWithError = true
             return UnrecognizedToken("Expected '$QUOTE'.")
         }
         return StringLiteralToken(sb.toString())
@@ -89,7 +89,7 @@ class Lexer(private val input: String) {
         if (specialSymbolToToken.containsKey(char))
             return specialSymbolToToken.getValue(char)
 
-        parsedWithError = true
+        tokenizedWithError = true
         val pos = currentIndex - 1
         skipToNextToken()
         return UnrecognizedToken("Unexpected character '$char' at position $pos.")

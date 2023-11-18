@@ -15,6 +15,7 @@ sealed class Stmt : ASTNode() {
     data class ReturnStatement(val expr: Expr) : Stmt()
     data class ProcDeclaration(val identifier: IdentifierToken, val parameters: List<Parameter>, val block: Block) : Stmt()
     data class ProcCall(val identifier: IdentifierToken, val arguments: List<Expr>) : Stmt()
+    data class InvalidStatement(val errorMessage: String) : Stmt()
 }
 data class Parameter(val identifier: IdentifierToken, val type: TypeToken) : ASTNode()
 sealed class Expr : ASTNode() {

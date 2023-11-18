@@ -1,12 +1,14 @@
 package language.parser
 
 import language.lexer.*
-import java.lang.IllegalStateException
+import kotlin.IllegalStateException
 import kotlin.reflect.KClass
 
 class RecursiveDescentParser(private val tokens: List<Token>) {
 
     private var currentTokenIndex = 0
+    var parsedWithError = false
+        private set
 
     fun parse(): Program {
         val statements = mutableListOf<Stmt>()
@@ -21,18 +23,25 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
 
     private fun statement(): Stmt? {
         if (currentTokenIndex == tokens.size) return null
-        return when (peekToken()) {
-            is VarKeywordToken -> varDeclaration()
-            is IdentifierToken -> assignmentOrProcCall()
-            is IfKeywordToken -> ifStatement()
-            is WhileKeywordToken -> whileStatement()
-            is LeftBraceToken -> block()
-            is PrintKeywordToken -> printStatement()
-            is FuncKeywordToken -> funcDeclaration()
-            is ReturnKeywordToken -> returnStatement()
-            is ProcKeywordToken -> procDeclaration()
-            else -> null
+        return try {
+            when (peekToken()) {
+                is VarKeywordToken -> varDeclaration()
+                is IdentifierToken -> assignmentOrProcCall()
+                is IfKeywordToken -> ifStatement()
+                is WhileKeywordToken -> whileStatement()
+                is LeftBraceToken -> block()
+                is PrintKeywordToken -> printStatement()
+                is FuncKeywordToken -> funcDeclaration()
+                is ReturnKeywordToken -> returnStatement()
+                is ProcKeywordToken -> procDeclaration()
+                else -> throw IllegalArgumentException("Unexpected token ${tokenToErrorName(peekToken())} at position $currentTokenIndex.")
+            }
+        } catch (e: IllegalArgumentException) {
+            parsedWithError = true
+            currentTokenIndex++
+            return Stmt.InvalidStatement(e.message ?: "");
         }
+
     }
 
     private fun varDeclaration(): Stmt.VarDeclaration {
@@ -223,7 +232,13 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         if (peekToken() == expected) {
             currentTokenIndex++
         } else {
-            throw IllegalArgumentException("Expected token: $expected, but found: ${peekToken()}.")
+            throw IllegalArgumentException(
+                "Expected token: ${tokenToErrorName(expected)}, but found: ${
+                    tokenToErrorName(
+                        peekToken()
+                    )
+                }."
+            )
         }
     }
 
@@ -238,8 +253,15 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     }
 
     private fun expectEndOfInput() {
+        // throwing an exception as it is unreachable state
         if (currentTokenIndex != tokens.size) {
-            throw IllegalArgumentException("Unexpected token at position $currentTokenIndex: ${tokens[currentTokenIndex]}")
+            throw IllegalStateException(
+                "Unexpected token at position $currentTokenIndex: ${
+                    tokenToErrorName(
+                        peekToken()
+                    )
+                }"
+            )
         }
     }
 
@@ -259,5 +281,34 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
                 else -> -1
             }
         }
+    }
+}
+
+// for errors printing
+fun tokenToErrorName(token: Token?): String {
+    return when (token) {
+        is IdentifierToken -> "name"
+        is ConstantToken -> "number"
+        is StringLiteralToken -> "string literal"
+        is BoolToken -> "boolean"
+        is OpToken -> "operation"
+        is LeftParenToken -> "("
+        is RightParenToken -> ")"
+        is LeftBraceToken -> "{"
+        is RightBraceToken -> "}"
+        is SemicolonToken -> ";"
+        is CommaToken -> ","
+        is ColonToken -> ":"
+        is AssignToken -> "="
+        is VarKeywordToken -> "var"
+        is IfKeywordToken -> "if"
+        is ElseKeywordToken -> "else"
+        is WhileKeywordToken -> "while"
+        is FuncKeywordToken -> "func"
+        is ProcKeywordToken -> "proc"
+        is ReturnKeywordToken -> "return"
+        is PrintKeywordToken -> "print"
+        is TypeToken -> "type"
+        else -> throw IllegalStateException("Unrecognized token.")
     }
 }

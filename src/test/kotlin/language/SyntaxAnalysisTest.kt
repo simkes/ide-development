@@ -8,13 +8,17 @@ import org.junit.jupiter.api.Test
 
 class SyntaxAnalysisTest {
 
-    private fun runTest(input: String, expected: Program) {
+    private fun runTest(input: String, expected: Program, parsedWithError: Boolean = false) {
         // assuming that lexer works fine
         val lexer = Lexer(input)
         val tokens = lexer.tokenize()
         val parser = RecursiveDescentParser(tokens)
         val programResult = parser.parse()
-        assertTrue(compare(programResult, expected), "Actual does not match expected.")
+        assertTrue(
+            compare(programResult, expected),
+            "Actual does not match expected. Expected: $expected, actual: $programResult."
+        )
+        assertEquals(parsedWithError, parser.parsedWithError)
     }
 
     @Test
@@ -264,6 +268,32 @@ class SyntaxAnalysisTest {
         runTest(
             "var complexResult = (10 == 2 * x && y != 5) || (z > 3 || !true);",
             Program(listOf(complexExpression))
+        )
+    }
+
+    @Test
+    @DisplayName("Test parsing of print statement with error.")
+    fun testPrintStatementError() {
+        val printStatement = Stmt.InvalidStatement("Expected token: ), but found: ;.")
+        runTest(
+            "print(\"Hello, World!\";",
+            Program(listOf(printStatement)),
+            true
+        )
+    }
+
+    @Test
+    @DisplayName("Test parsing of var declaration with error.")
+    fun testDeclarationError() {
+        runTest(
+            "var = 3 + x;",
+            Program(listOf(
+                Stmt.InvalidStatement("Expected token of type: IdentifierToken, but found: AssignToken."),
+                Stmt.InvalidStatement("Unexpected token number at position 2."),
+                Stmt.InvalidStatement("Unexpected token operation at position 3."),
+                Stmt.InvalidStatement("Expected token: (, but found: ;.")
+            )),
+            true
         )
     }
 

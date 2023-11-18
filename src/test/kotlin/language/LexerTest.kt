@@ -16,7 +16,7 @@ class LexerTest {
                 "Actual $actual does not match expected $expected at position $index."
             )
         }
-        assertEquals(parsedWithError, lexer.parsedWithError)
+        assertEquals(parsedWithError, lexer.tokenizedWithError)
     }
 
     @Test
