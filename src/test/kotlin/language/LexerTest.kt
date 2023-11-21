@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class LexerTest {
     private fun runTest(input: String, expectedTokens: List<Token>, parsedWithError: Boolean = false) {
         val lexer = Lexer(input)
-        val actualTokens = lexer.tokenize()
+        val actualTokens = lexer.tokenize().map { tokenWithOffset -> tokenWithOffset.token }
         assertEquals(expectedTokens.size, actualTokens.size, "Size mismatch.")
         expectedTokens.zip(actualTokens).forEachIndexed { index, (expected, actual) ->
             assertTrue(
@@ -392,10 +392,10 @@ class LexerTest {
                 ColonToken,
                 NumberTypeToken,
                 RightParenToken,
-                UnrecognizedToken("Unexpected character '&' at position 31."),
+                UnrecognizedToken("Unexpected symbol."),
                 ReturnKeywordToken,
                 IdentifierToken("a"),
-                UnrecognizedToken("Unexpected character '_' at position 42."),
+                UnrecognizedToken("Unexpected symbol."),
                 IdentifierToken("b"),
                 SemicolonToken,
                 RightBraceToken

@@ -81,14 +81,16 @@ fun isSpecialSymbol(char: Char): Boolean {
     return specialSymbolToToken.containsKey(char.toString()) || char == '&' || char == '|'
 }
 
-object VarKeywordToken : Token()
-object IfKeywordToken : Token()
-object ElseKeywordToken : Token()
-object WhileKeywordToken : Token()
-object FuncKeywordToken : Token()
-object ProcKeywordToken : Token()
-object ReturnKeywordToken : Token()
-object PrintKeywordToken : Token()
+sealed class KeywordToken() : Token()
+
+object VarKeywordToken : KeywordToken()
+object IfKeywordToken : KeywordToken()
+object ElseKeywordToken : KeywordToken()
+object WhileKeywordToken : KeywordToken()
+object FuncKeywordToken : KeywordToken()
+object ProcKeywordToken : KeywordToken()
+object ReturnKeywordToken : KeywordToken()
+object PrintKeywordToken : KeywordToken()
 
 sealed class TypeToken : Token()
 object NumberTypeToken : TypeToken()

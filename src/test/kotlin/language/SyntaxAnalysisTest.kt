@@ -11,7 +11,7 @@ class SyntaxAnalysisTest {
     private fun runTest(input: String, expected: Stmt.Block, parsedWithError: Boolean = false) {
         // assuming that lexer works fine
         val lexer = Lexer(input)
-        val tokens = lexer.tokenize()
+        val tokens = lexer.tokenize().map { tokenWithOffset -> tokenWithOffset.token }
         val parser = RecursiveDescentParser(tokens)
         val programResult = parser.parse()
         assertTrue(
