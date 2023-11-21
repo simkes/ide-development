@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class SyntaxAnalysisTest {
 
-    private fun runTest(input: String, expected: Program, parsedWithError: Boolean = false) {
+    private fun runTest(input: String, expected: Stmt.Block, parsedWithError: Boolean = false) {
         // assuming that lexer works fine
         val lexer = Lexer(input)
         val tokens = lexer.tokenize()
@@ -38,7 +38,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var result = 3 + (2 * x);",
-            Program(listOf(varDeclaration))
+            Stmt.Block(listOf(varDeclaration))
         )
     }
 
@@ -65,7 +65,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "func add(a: number, b: number) { return a + b; }",
-            Program(listOf(funcDeclaration))
+            Stmt.Block(listOf(funcDeclaration))
         )
     }
 
@@ -97,7 +97,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var i = 0; while (i < 5) { i = i + 1; }",
-            Program(listOf(varDeclaration, whileStatement))
+            Stmt.Block(listOf(varDeclaration, whileStatement))
         )
     }
 
@@ -133,7 +133,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var x = true; var y = \"\"; if (x) { y = \"True\"; } else { y = \"False\"; }",
-            Program(listOf(varXDeclaration, varYDeclaration, ifElseStatement))
+            Stmt.Block(listOf(varXDeclaration, varYDeclaration, ifElseStatement))
         )
     }
 
@@ -145,7 +145,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "print(\"Hello, World!\");",
-            Program(listOf(printStatement))
+            Stmt.Block(listOf(printStatement))
         )
     }
 
@@ -174,7 +174,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var result = 2 * x + 10 - 4 / y;",
-            Program(listOf(complexExpression))
+            Stmt.Block(listOf(complexExpression))
         )
     }
 
@@ -198,7 +198,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var boolResult = true || x && !false;",
-            Program(listOf(boolExpression))
+            Stmt.Block(listOf(boolExpression))
         )
     }
 
@@ -223,7 +223,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var relResult = (5 < y) == (z > 3);",
-            Program(listOf(relationalExpression))
+            Stmt.Block(listOf(relationalExpression))
         )
     }
 
@@ -267,7 +267,7 @@ class SyntaxAnalysisTest {
         )
         runTest(
             "var complexResult = (10 == 2 * x && y != 5) || (z > 3 || !true);",
-            Program(listOf(complexExpression))
+            Stmt.Block(listOf(complexExpression))
         )
     }
 
@@ -277,7 +277,7 @@ class SyntaxAnalysisTest {
         val printStatement = Stmt.InvalidStatement("Expected token: ), but found: ;.")
         runTest(
             "print(\"Hello, World!\";",
-            Program(listOf(printStatement)),
+            Stmt.Block(listOf(printStatement)),
             true
         )
     }
@@ -287,7 +287,7 @@ class SyntaxAnalysisTest {
     fun testDeclarationError() {
         runTest(
             "var = 3 + x;",
-            Program(listOf(
+            Stmt.Block(listOf(
                 Stmt.InvalidStatement("Expected token of type: IdentifierToken, but found: AssignToken."),
                 Stmt.InvalidStatement("Unexpected token number at position 2."),
                 Stmt.InvalidStatement("Unexpected token operation at position 3."),

@@ -10,7 +10,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     var parsedWithError = false
         private set
 
-    fun parse(): Program {
+    fun parse(): Stmt.Block {
         val statements = mutableListOf<Stmt>()
         var statement = statement()
         while (statement != null) {
@@ -18,7 +18,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
             statement = statement()
         }
         expectEndOfInput()
-        return Program(statements)
+        return Stmt.Block(statements)
     }
 
     private fun statement(): Stmt? {

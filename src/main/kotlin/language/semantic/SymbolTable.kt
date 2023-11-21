@@ -28,4 +28,6 @@ class SymbolTable {
             symbols[name]
         }
     }
+
+    fun contains(name: String, parameterTypes: List<Type>? = null): Boolean = resolve(name, parameterTypes) != null
 }

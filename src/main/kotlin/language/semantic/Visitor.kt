@@ -4,12 +4,11 @@ import dataStructures.SpaghettiStack
 import language.parser.*
 
 interface Visitor {
-    fun visit(node: Program, symbolTables: SpaghettiStack<SymbolTable>): Any = Unit
     fun visit(node: Stmt.VarDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.Assignment, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.IfStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.WhileStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
-    fun visit(node: Stmt.Block, symbolTables: SpaghettiStack<SymbolTable>): Any = Unit
+    fun visit(node: Stmt.Block, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.PrintStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.FuncDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.ReturnStatement, symbolTables: SpaghettiStack<SymbolTable>): Any

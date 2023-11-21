@@ -30,7 +30,6 @@ fun compare(node1: ASTNode?, node2: ASTNode?): Boolean {
     if (node1 == null || node2 == null) return node1 == null && node2 == null
     if (node1::class != node2::class) return false
     return when (node1) {
-        is Program -> compareProgram(node1, node2 as Program)
         is Stmt.VarDeclaration -> compareVarDeclaration(node1, node2 as Stmt.VarDeclaration)
         is Stmt.Assignment -> compareAssignment(node1, node2 as Stmt.Assignment)
         is Stmt.IfStatement -> compareIfStatement(node1, node2 as Stmt.IfStatement)
@@ -52,10 +51,6 @@ fun compare(node1: ASTNode?, node2: ASTNode?): Boolean {
         is Expr.Constant -> compareConstant(node1, node2 as Expr.Constant)
         else -> throw IllegalStateException("Unexpected ast node.")
     }
-}
-
-fun compareProgram(node1: Program, node2: Program): Boolean {
-    return compare(node1.statements, node2.statements)
 }
 
 fun compareVarDeclaration(node1: Stmt.VarDeclaration, node2: Stmt.VarDeclaration): Boolean {

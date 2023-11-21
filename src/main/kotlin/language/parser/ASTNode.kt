@@ -9,12 +9,6 @@ sealed class ASTNode {
     abstract fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any
 }
 
-data class Program(val statements: List<Stmt>) : ASTNode() {
-    override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {
-        return visitor.visit(this, symbolTables)
-    }
-}
-
 sealed class Stmt : ASTNode() {
     data class VarDeclaration(val identifier: IdentifierToken, val expr: Expr) : Stmt() {
         override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {
