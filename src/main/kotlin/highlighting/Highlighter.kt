@@ -1,6 +1,7 @@
 package highlighting
 
 import language.lexer.*
+import language.parser.Stmt
 
 enum class Color {
     RED, // errors
@@ -38,4 +39,11 @@ fun createHighlighter(tokenWithOffset: TokenWithOffset): Highlighter {
 
         else -> Highlighter(startOffset, endOffset)
     }
+}
+
+// syntax errors highlighting
+fun createHighlighter(invalidStatement: Stmt.InvalidStatement, tokens: List<TokenWithOffset>): Highlighter {
+    val startOffset = tokens[invalidStatement.start].startOffset
+    val endOffset = tokens[invalidStatement.end].endOffset
+    return Highlighter(startOffset, endOffset, Color.BLACK, true, invalidStatement.errorMessage)
 }

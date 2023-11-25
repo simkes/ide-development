@@ -11,12 +11,17 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import language.lexer.Lexer
+import language.parser.RecursiveDescentParser
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -24,8 +29,49 @@ class HighlightingTest {
     private fun getHighlighters(text: String): List<Highlighter> {
         val lexer = Lexer(text)
         val tokensWithOffset = lexer.tokenize()
-        val highlighters = tokensWithOffset.map { tokenWithOffset -> createHighlighter(tokenWithOffset) }
-        return highlighters
+        val parser = RecursiveDescentParser(tokensWithOffset.map { tokenWithOffset -> tokenWithOffset.token })
+        val (_, syntaxErrors) = parser.parse()
+        val lexicalHighlighters = tokensWithOffset.map { tokenWithOffset -> createHighlighter(tokenWithOffset) }
+        val syntaxErrorsHighlighters =
+            syntaxErrors.map { invalidStatement -> createHighlighter(invalidStatement, tokensWithOffset) }
+        // TODO: merge lexicalHighlighters & syntaxErrorsHighlighters by creating separate highlighter in intersections (taking color
+        // TODO: from lexical and underline from syntax, error message from lexical but if empty - from syntax, sort by startOffset
+        return mergeHighlighters(lexicalHighlighters, syntaxErrorsHighlighters)
+    }
+
+    private fun mergeHighlighters(lexical: List<Highlighter>, syntax: List<Highlighter>): List<Highlighter> {
+        val merged = mutableListOf<Highlighter>()
+        var syntaxIndex = 0
+
+        for (lex in lexical) {
+            while (syntaxIndex < syntax.size && syntax[syntaxIndex].endOffset < lex.startOffset) {
+                syntaxIndex++
+            }
+
+            if (syntaxIndex < syntax.size && syntax[syntaxIndex].startOffset <= lex.endOffset) {
+                val syn = syntax[syntaxIndex]
+
+                // Merge properties: color from lexical, underline from syntax, error message appropriately
+                val errorMessage = if (lex.errorMessage.isNotEmpty()) lex.errorMessage else syn.errorMessage
+                merged.add(
+                    Highlighter(
+                        startOffset = maxOf(lex.startOffset, syn.startOffset),
+                        endOffset = minOf(lex.endOffset, syn.endOffset),
+                        color = lex.color,
+                        underlined = syn.underlined,
+                        errorMessage = errorMessage
+                    )
+                )
+            } else {
+                // No overlapping syntax highlighter, add lexical as is
+                merged.add(lex)
+            }
+        }
+
+        // Add remaining syntax highlighters that don't overlap with any lexical highlighters
+        merged.addAll(syntax.filterNot { syn -> merged.any { lex -> lex.startOffset <= syn.endOffset && lex.endOffset >= syn.startOffset } })
+
+        return merged.sortedBy { it.startOffset }
     }
 
     private fun createAnnotatedString(text: String): AnnotatedString {
@@ -45,7 +91,13 @@ class HighlightingTest {
                 annotatedString.append(text.substring(lastIndex, interval.startOffset))
             }
 
-            annotatedString.withStyle(style = SpanStyle(color = colorMap[interval.color]!!)) {
+            val textDecoration = if (interval.underlined) {
+                TextDecoration.Underline
+            } else {
+                TextDecoration.None
+            }
+
+            annotatedString.withStyle(style = SpanStyle(color = colorMap[interval.color]!!, textDecoration = textDecoration)) {
                 append(text.substring(interval.startOffset, interval.endOffset))
             }
 
@@ -81,6 +133,7 @@ class HighlightingTest {
             }
         }
     }
+
 
     private fun runTestApp(text: String) {
         application {
@@ -186,4 +239,15 @@ proc main() {
 """
         runTestApp(programText)
     }
+
+//    @Test
+//    @DisplayName("tmp.")
+//    fun testTmp() {
+//        val programText = """
+//{
+//  print("Aboba);
+//}
+//"""
+//        runTestApp(programText)
+//    }
 }

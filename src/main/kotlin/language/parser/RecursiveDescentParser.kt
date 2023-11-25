@@ -7,24 +7,21 @@ import kotlin.reflect.KClass
 class RecursiveDescentParser(private val tokens: List<Token>) {
 
     private var currentTokenIndex = 0
-    var parsedWithError = false
-        private set
 
-    fun parse(): Stmt.Block {
-        val statements = mutableListOf<Stmt>()
-        var statement = statement()
-        while (statement != null) {
-            statements.add(statement)
-            statement = statement()
-        }
+    private val errors = mutableListOf<Stmt.InvalidStatement>()
+
+    fun parse(): Pair<Stmt.Block, List<Stmt.InvalidStatement>> {
+        val program = block(false)
         expectEndOfInput()
-        return Stmt.Block(statements)
+        return Pair(program, errors)
     }
 
     private fun statement(): Stmt? {
-        if (currentTokenIndex == tokens.size) return null
-        return try {
-            when (peekToken()) {
+        val startToken = currentTokenIndex
+        if(currentTokenIndex == tokens.size)
+            return null
+        try {
+            return when (val token = peekToken()) {
                 is VarKeywordToken -> varDeclaration()
                 is IdentifierToken -> assignmentOrProcCall()
                 is IfKeywordToken -> ifStatement()
@@ -34,23 +31,30 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
                 is FuncKeywordToken -> funcDeclaration()
                 is ReturnKeywordToken -> returnStatement()
                 is ProcKeywordToken -> procDeclaration()
-                else -> throw IllegalArgumentException("Unexpected token ${tokenToErrorName(peekToken())} at position $currentTokenIndex.")
+                else -> throw IllegalArgumentException("Unexpected ${tokenToErrorName(token)}.")
             }
         } catch (e: IllegalArgumentException) {
-            parsedWithError = true
+            if(currentTokenIndex == tokens.size)
+                currentTokenIndex -= 1
+            val message = if (e.message == null || peekToken() is UnrecognizedToken) {
+                ""
+            } else {
+                e.message!!
+            }
+            val invalidStmt = Stmt.InvalidStatement(message, startToken, currentTokenIndex)
             currentTokenIndex++
-            return Stmt.InvalidStatement(e.message ?: "");
+            return invalidStmt
         }
-
     }
 
     private fun varDeclaration(): Stmt.VarDeclaration {
+        val startToken = currentTokenIndex
         consumeToken(VarKeywordToken)
         val identifierToken = consumeTokenOfType(IdentifierToken::class) as IdentifierToken
         consumeToken(AssignToken)
         val expression = expression()
         consumeToken(SemicolonToken)
-        return Stmt.VarDeclaration(identifierToken, expression)
+        return Stmt.VarDeclaration(identifierToken, expression, startToken, currentTokenIndex - 1)
     }
 
     private fun assignmentOrProcCall(): Stmt {
@@ -63,21 +67,24 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     }
 
     private fun assignment(identifierToken: IdentifierToken): Stmt.Assignment {
+        val startToken = currentTokenIndex - 1
         consumeToken(AssignToken)
         val expression = expression()
         consumeToken(SemicolonToken)
-        return Stmt.Assignment(identifierToken, expression)
+        return Stmt.Assignment(identifierToken, expression, startToken, currentTokenIndex - 1)
     }
 
     private fun procCall(identifierToken: IdentifierToken): Stmt.ProcCall {
+        val startToken = currentTokenIndex - 1
         consumeToken(LeftParenToken)
         val arguments = arguments()
         consumeToken(RightParenToken)
         consumeToken(SemicolonToken)
-        return Stmt.ProcCall(identifierToken, arguments)
+        return Stmt.ProcCall(identifierToken, arguments, startToken, currentTokenIndex - 1)
     }
 
     private fun ifStatement(): Stmt.IfStatement {
+        val startToken = currentTokenIndex
         consumeToken(IfKeywordToken)
         consumeToken(LeftParenToken)
         val condition = expression()
@@ -91,63 +98,107 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         return Stmt.IfStatement(
             condition,
             block,
-            elseBlock
+            elseBlock,
+            startToken,
+            currentTokenIndex - 1
         )
     }
 
     private fun whileStatement(): Stmt.WhileStatement {
+        val startToken = currentTokenIndex
         consumeToken(WhileKeywordToken)
         consumeToken(LeftParenToken)
         val condition = expression()
         consumeToken(RightParenToken)
         val block = block()
-        return Stmt.WhileStatement(condition, block)
+        return Stmt.WhileStatement(condition, block, startToken, currentTokenIndex - 1)
     }
 
-    private fun block(): Stmt.Block {
-        consumeToken(LeftBraceToken)
-        val statements = mutableListOf<Stmt>()
-        while (!checkToken(RightBraceToken)) {
+    private fun collectInvalidStatementsInBlock(statements: List<Stmt>): MutableList<Stmt> {
+        val newStatements = mutableListOf<Stmt>()
+        var invalidStatementEncountered = false
+        var lastInvalidStatementEnd = -1
+
+        for (statement in statements) {
+            if (statement is Stmt.InvalidStatement) {
+                if (!invalidStatementEncountered) {
+                    newStatements.add(statement)
+                    invalidStatementEncountered = true
+                }
+                lastInvalidStatementEnd = statement.end
+            } else {
+                if (invalidStatementEncountered) {
+                    addInvalidStatement(newStatements, lastInvalidStatementEnd)
+                    invalidStatementEncountered = false
+                }
+                newStatements.add(statement)
+            }
+        }
+
+        if (invalidStatementEncountered) {
+            addInvalidStatement(newStatements, lastInvalidStatementEnd)
+        }
+
+        return newStatements
+    }
+    private fun addInvalidStatement(newStatements: MutableList<Stmt>, newEnd: Int) {
+        val firstInvalidStatement = newStatements.last() as Stmt.InvalidStatement
+        newStatements[newStatements.size - 1] = firstInvalidStatement.copy(end = newEnd)
+        errors.add(newStatements.last() as Stmt.InvalidStatement)
+    }
+
+    private fun block(withBraces: Boolean = true): Stmt.Block {
+        val startToken = currentTokenIndex
+        if (withBraces)
+            consumeToken(LeftBraceToken)
+        var statements = mutableListOf<Stmt>()
+        while (currentTokenIndex < tokens.size && !checkToken(RightBraceToken)) {
             statements.add(statement() ?: break)
         }
-        consumeToken(RightBraceToken)
-        return Stmt.Block(statements)
+        statements = collectInvalidStatementsInBlock(statements)
+        if (withBraces)
+            consumeToken(RightBraceToken)
+        return Stmt.Block(statements, startToken, currentTokenIndex - 1)
     }
 
     private fun printStatement(): Stmt.PrintStatement {
+        val startToken = currentTokenIndex
         consumeToken(PrintKeywordToken)
         consumeToken(LeftParenToken)
         val expression = expression()
         consumeToken(RightParenToken)
         consumeToken(SemicolonToken)
-        return Stmt.PrintStatement(expression)
+        return Stmt.PrintStatement(expression, startToken, currentTokenIndex - 1)
     }
 
     private fun funcDeclaration(): Stmt.FuncDeclaration {
+        val startToken = currentTokenIndex
         consumeToken(FuncKeywordToken)
         val name = consumeTokenOfType(IdentifierToken::class) as IdentifierToken
         consumeToken(LeftParenToken)
         val parameters = parameters()
         consumeToken(RightParenToken)
         val block = block()
-        return Stmt.FuncDeclaration(name, parameters, block)
+        return Stmt.FuncDeclaration(name, parameters, block, startToken, currentTokenIndex - 1)
     }
 
     private fun returnStatement(): Stmt.ReturnStatement {
+        val startToken = currentTokenIndex
         consumeToken(ReturnKeywordToken)
         val expression = expression()
         consumeToken(SemicolonToken)
-        return Stmt.ReturnStatement(expression)
+        return Stmt.ReturnStatement(expression, startToken, currentTokenIndex - 1)
     }
 
     private fun procDeclaration(): Stmt.ProcDeclaration {
+        val startToken = currentTokenIndex
         consumeToken(ProcKeywordToken)
         val name = consumeTokenOfType(IdentifierToken::class) as IdentifierToken
         consumeToken(LeftParenToken)
         val parameters = parameters()
         consumeToken(RightParenToken)
         val block = block()
-        return Stmt.ProcDeclaration(name, parameters, block)
+        return Stmt.ProcDeclaration(name, parameters, block, startToken, currentTokenIndex - 1)
     }
 
     private fun arguments(): List<Expr> {
@@ -164,10 +215,11 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         val params = mutableListOf<Parameter>()
         if (!checkToken(RightParenToken)) {
             do {
+                val startToken = currentTokenIndex
                 val paramName = consumeTokenOfType(IdentifierToken::class) as IdentifierToken
                 consumeToken(ColonToken)
                 val paramType = type()
-                params.add(Parameter(paramName, paramType))
+                params.add(Parameter(paramName, paramType, startToken, currentTokenIndex - 1))
             } while (checkToken(CommaToken).also { if (it) consumeToken(CommaToken) })
         }
         return params
@@ -178,19 +230,22 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     }
 
     private fun factor(): Expr {
+        val startToken = currentTokenIndex
         return when (val token = nextToken()) {
-            is BoolToken -> Expr.BoolValue(token)
-            is StringLiteralToken -> Expr.StringLiteral(token)
-            is ConstantToken -> Expr.Constant(token)
+            is BoolToken -> Expr.BoolValue(token, startToken, startToken)
+            is StringLiteralToken -> Expr.StringLiteral(token, startToken, startToken)
+            is ConstantToken -> Expr.Constant(token, startToken, startToken)
             is IdentifierToken -> identifierOrFuncCall(token)
             is LeftParenToken -> {
                 val expr = expression()
                 consumeToken(RightParenToken)
                 expr
             }
-
-            is OpToken -> Expr.UnaryOp(token, factor())
-            else -> throw IllegalStateException("Empty expression factor?")
+            is OpToken -> Expr.UnaryOp(token, factor(), startToken, currentTokenIndex - 1)
+            else -> {
+                currentTokenIndex-= 1
+                throw IllegalArgumentException("Empty expression.")
+            }
         }
     }
 
@@ -198,25 +253,27 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         return if (checkToken(LeftParenToken)) {
             funcCall(identifierToken)
         } else {
-            Expr.Variable(identifierToken)
+            Expr.Variable(identifierToken, currentTokenIndex - 1, currentTokenIndex - 1)
         }
     }
 
     private fun funcCall(identifierToken: IdentifierToken): Expr.FuncCall {
+        val startToken = currentTokenIndex - 1
         consumeToken(LeftParenToken)
         val arguments = arguments()
         consumeToken(RightParenToken)
-        return Expr.FuncCall(identifierToken, arguments)
+        return Expr.FuncCall(identifierToken, arguments, startToken, currentTokenIndex - 1)
     }
 
     private fun expression(priority: Int = EXPR_PRIORITY): Expr {
         if (priority == FACTOR_PRIORITY)
             return factor()
+        val startToken = currentTokenIndex
         var curExpr = expression(priority + 1)
         while (getPriority(peekOp()) == priority) {
             val op = nextOp()
             val nextExpr = expression(priority + 1)
-            curExpr = Expr.BinaryOp(op, curExpr, nextExpr)
+            curExpr = Expr.BinaryOp(op, curExpr, nextExpr, startToken, currentTokenIndex - 1)
         }
         return curExpr
     }
@@ -229,26 +286,30 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     private fun checkToken(expected: Token): Boolean = peekToken() == expected
 
     private fun consumeToken(expected: Token) {
+        if(currentTokenIndex == tokens.size)
+            throw IllegalArgumentException("Expected: ${tokenToErrorName(expected)}.")
         if (peekToken() == expected) {
             currentTokenIndex++
         } else {
-            throw IllegalArgumentException(
-                "Expected token: ${tokenToErrorName(expected)}, but found: ${
-                    tokenToErrorName(
-                        peekToken()
-                    )
-                }."
-            )
+            throw IllegalArgumentException("Expected: ${tokenToErrorName(expected)}.")
         }
     }
 
     private fun consumeTokenOfType(expected: KClass<out Token>): Token {
+        if(currentTokenIndex == tokens.size)
+            throw IllegalArgumentException("Expected type: ${expected.simpleName}.")
         val currentToken = peekToken()
         if (expected.isInstance(currentToken)) {
             currentTokenIndex++
             return currentToken
         } else {
-            throw IllegalArgumentException("Expected token of type: ${expected.simpleName}, but found: ${currentToken::class.simpleName}.")
+            throw IllegalArgumentException(
+                "Expected type: ${expected.simpleName}, but found: ${
+                    tokenToErrorName(
+                        currentToken
+                    )
+                }."
+            )
         }
     }
 
@@ -309,6 +370,7 @@ fun tokenToErrorName(token: Token?): String {
         is ReturnKeywordToken -> "return"
         is PrintKeywordToken -> "print"
         is TypeToken -> "type"
-        else -> throw IllegalStateException("Unrecognized token.")
+        is UnrecognizedToken -> "unrecognized token"
+        else -> throw IllegalStateException("Null token.")
     }
 }
