@@ -5,8 +5,10 @@ class SymbolTable {
     private val symbols = mutableMapOf<String, Symbol>()
 
     // overloads handling
-    private fun generateCallableSignature(name: String, parameterTypes: List<Type>): String {
-        return name + "(" + parameterTypes.joinToString(",") { it.toString() } + ")"
+    companion object {
+        fun generateCallableSignature(name: String, parameterTypes: List<Type>): String {
+            return name + "(" + parameterTypes.joinToString(",") { it.toString() } + ")"
+        }
     }
 
     fun define(symbol: Symbol) {

@@ -7,7 +7,8 @@ import language.lexer.StringTypeToken
 enum class Type {
     NUMBER,
     STRING,
-    BOOL
+    BOOL,
+    UNKNOWN
 }
 
 val tokenToType = mapOf(

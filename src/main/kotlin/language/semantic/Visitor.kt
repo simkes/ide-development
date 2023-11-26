@@ -2,8 +2,9 @@ package language.semantic
 
 import dataStructures.SpaghettiStack
 import language.parser.*
-
+data class SemanticError(val node: ASTNode, val errorMessage: String)
 interface Visitor {
+    fun getErrors(): List<SemanticError>
     fun visit(node: Stmt.VarDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.Assignment, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.IfStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
@@ -14,9 +15,7 @@ interface Visitor {
     fun visit(node: Stmt.ReturnStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.ProcDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.ProcCall, symbolTables: SpaghettiStack<SymbolTable>): Any
-    fun visit(node: Stmt.InvalidStatement, symbolTables: SpaghettiStack<SymbolTable>): Any =
-        throw IllegalStateException("Unhandled parse error.")
-
+    fun visit(node: Stmt.InvalidStatement, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Parameter, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Expr.BinaryOp, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Expr.UnaryOp, symbolTables: SpaghettiStack<SymbolTable>): Any

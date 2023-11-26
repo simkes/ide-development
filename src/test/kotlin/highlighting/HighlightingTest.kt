@@ -20,8 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import dataStructures.SpaghettiStack
 import language.lexer.Lexer
 import language.parser.RecursiveDescentParser
+import language.semantic.DefaultASTVisitor
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -30,46 +32,54 @@ class HighlightingTest {
         val lexer = Lexer(text)
         val tokensWithOffset = lexer.tokenize()
         val parser = RecursiveDescentParser(tokensWithOffset.map { tokenWithOffset -> tokenWithOffset.token })
-        val (_, syntaxErrors) = parser.parse()
+        val (AST, syntaxErrors) = parser.parse()
+        val visitor = DefaultASTVisitor()
+        visitor.visit(AST, SpaghettiStack())
         val lexicalHighlighters = tokensWithOffset.map { tokenWithOffset -> createHighlighter(tokenWithOffset) }
         val syntaxErrorsHighlighters =
             syntaxErrors.map { invalidStatement -> createHighlighter(invalidStatement, tokensWithOffset) }
+        val semanticErrorsHighlighters = visitor.getErrors().map {error -> createHighlighter(error, tokensWithOffset) }
+        val lexicalAndSyntaxMerged = mergeHighlighters(lexicalHighlighters, syntaxErrorsHighlighters)
         // TODO: merge lexicalHighlighters & syntaxErrorsHighlighters by creating separate highlighter in intersections (taking color
         // TODO: from lexical and underline from syntax, error message from lexical but if empty - from syntax, sort by startOffset
-        return mergeHighlighters(lexicalHighlighters, syntaxErrorsHighlighters)
+        // TODO: merge to them semantic errors highlighting win underlining
+        return mergeHighlighters(lexicalAndSyntaxMerged, semanticErrorsHighlighters)
     }
 
-    private fun mergeHighlighters(lexical: List<Highlighter>, syntax: List<Highlighter>): List<Highlighter> {
+    private fun mergeHighlighters(primary: List<Highlighter>, secondary: List<Highlighter>): List<Highlighter> {
         val merged = mutableListOf<Highlighter>()
-        var syntaxIndex = 0
+        var secondaryIndex = 0
 
-        for (lex in lexical) {
-            while (syntaxIndex < syntax.size && syntax[syntaxIndex].endOffset < lex.startOffset) {
-                syntaxIndex++
+        for (prim in primary) {
+            while (secondaryIndex < secondary.size && secondary[secondaryIndex].endOffset < prim.startOffset) {
+                secondaryIndex++
             }
 
-            if (syntaxIndex < syntax.size && syntax[syntaxIndex].startOffset <= lex.endOffset) {
-                val syn = syntax[syntaxIndex]
+            if (secondaryIndex < secondary.size && secondary[secondaryIndex].startOffset <= prim.endOffset) {
+                val sec = secondary[secondaryIndex]
 
-                // Merge properties: color from lexical, underline from syntax, error message appropriately
-                val errorMessage = if (lex.errorMessage.isNotEmpty()) lex.errorMessage else syn.errorMessage
+                // Merge properties: color, underline, and error message from the secondary if present, otherwise from the primary
+                val color = if (sec.color != highlighting.Color.BLACK) sec.color else prim.color
+                val underlined = sec.underlined || prim.underlined
+                val errorMessage = if (sec.errorMessage.isNotEmpty()) sec.errorMessage else prim.errorMessage
+
                 merged.add(
                     Highlighter(
-                        startOffset = maxOf(lex.startOffset, syn.startOffset),
-                        endOffset = minOf(lex.endOffset, syn.endOffset),
-                        color = lex.color,
-                        underlined = syn.underlined,
+                        startOffset = maxOf(prim.startOffset, sec.startOffset),
+                        endOffset = minOf(prim.endOffset, sec.endOffset),
+                        color = color,
+                        underlined = underlined,
                         errorMessage = errorMessage
                     )
                 )
             } else {
-                // No overlapping syntax highlighter, add lexical as is
-                merged.add(lex)
+                // No overlapping secondary highlighter, add primary as is
+                merged.add(prim)
             }
         }
 
-        // Add remaining syntax highlighters that don't overlap with any lexical highlighters
-        merged.addAll(syntax.filterNot { syn -> merged.any { lex -> lex.startOffset <= syn.endOffset && lex.endOffset >= syn.startOffset } })
+        // Add remaining secondary highlighters that don't overlap with any primary highlighters
+        merged.addAll(secondary.filterNot { sec -> merged.any { prim -> prim.startOffset <= sec.endOffset && prim.endOffset >= sec.startOffset } })
 
         return merged.sortedBy { it.startOffset }
     }
@@ -148,11 +158,12 @@ class HighlightingTest {
     fun testSimpleProgram() {
         val programText = """
 func factorial(n: number) {
-    if (n <= 1) {
-        return 1;
-    } else {
-        return n * factorial(n - 1);
+    var result = 1;
+    while (n > 1) {
+        result = result * n;
+        n = n - 1;
     }
+    return result;
 }
 
 proc main() {
@@ -171,11 +182,12 @@ proc main() {
     fun testProgramWithError() {
         val programText = """
 func factorial(n: number) {
-    if (n <= 1) {
-        return 1;
-    } else {
-        return n & factorial(n - 1);
+    var result = 1;
+    while (n > 1) {
+        result = result & n;
+        n = n - 1;
     }
+    return result;
 }
 
 proc main() {
@@ -197,7 +209,7 @@ func calculateScore(choices: number) {
     return choices * 100;
 }
 
-proc makeChoice(message: string) {
+func makeChoice(message: string) {
     print(message);
     var choice = 0;
     while (choice < 1 || choice > 2) {

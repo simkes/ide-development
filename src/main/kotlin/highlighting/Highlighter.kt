@@ -2,6 +2,7 @@ package highlighting
 
 import language.lexer.*
 import language.parser.Stmt
+import language.semantic.SemanticError
 
 enum class Color {
     RED, // errors
@@ -46,4 +47,11 @@ fun createHighlighter(invalidStatement: Stmt.InvalidStatement, tokens: List<Toke
     val startOffset = tokens[invalidStatement.start].startOffset
     val endOffset = tokens[invalidStatement.end].endOffset
     return Highlighter(startOffset, endOffset, Color.BLACK, true, invalidStatement.errorMessage)
+}
+
+// semantic errors highlighting
+fun createHighlighter(semanticError: SemanticError, tokens: List<TokenWithOffset>): Highlighter {
+    val startOffset = tokens[semanticError.node.start].startOffset
+    val endOffset = tokens[semanticError.node.end].endOffset
+    return Highlighter(startOffset, endOffset, Color.BLACK, true, semanticError.errorMessage)
 }
