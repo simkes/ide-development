@@ -252,14 +252,186 @@ proc main() {
         runTestApp(programText)
     }
 
-//    @Test
-//    @DisplayName("tmp.")
-//    fun testTmp() {
-//        val programText = """
-//{
-//  print("Aboba);
-//}
-//"""
-//        runTestApp(programText)
-//    }
+    @Test
+    @DisplayName("Unresolved function overload.")
+    fun testUnresolvedFunction() {
+        val programText = """
+func addNumbers(a: number, b: number) {
+    var sum = a + b;
+    return sum;
+}
+
+var result = addNumbers(5, "10");
+
+"""
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Type mismatch.")
+    fun testTypeMismatch() {
+        val programText = """
+func concatStrings(str1: string, str2: number) {
+    return str1 % str2;
+}
+
+var message = concatStrings("Hello", "World");
+
+"""
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Function type mismatch.")
+    fun testFunctionTypeMismatch() {
+        val programText = """
+    func circleArea(radius: string) {
+        var area = 3 * radius * radius;
+        return area;
+    }
+
+    var result = circleArea(10);
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Unresolved symbol.")
+    fun testUnresolvedSymbol() {
+        val programText = """
+    proc increment(num: number) {
+        num = num + 1;
+        print(num);
+    }
+
+    increment(x);
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Missing semicolon in return statement.")
+    fun testMissingSemicolonInReturn() {
+        val programText = """
+    func power(base: number, exponent: number) {
+        var result = 1;
+        while (exponent > 0) {
+            result = result * base;
+            exponent = exponent - 1;
+        }
+        return result
+    }
+
+    var powResult = power(2, 3);
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Conflicting variable declaration.")
+    fun testConflictingVariableDeclaration() {
+        val programText = """
+    var x = 10;
+    var x = "Hello";
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Unresolved variable in assignment.")
+    fun testUnresolvedVariableInAssignment() {
+        val programText = """
+    y = 5;
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Type mismatch in assignment.")
+    fun testTypeMismatchInAssignment() {
+        val programText = """
+    var x = 10;
+    x = "Hello";
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Incorrect condition type in if statement.")
+    fun testIncorrectConditionTypeInIfStatement() {
+        val programText = """
+    if ("not a boolean") {
+    
+    }
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Missing return statement in function.")
+    fun testMissingReturnStatementInFunction() {
+        val programText = """
+    func myFunction() {
+        var i = 4;
+    }
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Unexpected return statement in procedure.")
+    fun testUnexpectedReturnInProcedure() {
+        val programText = """
+    proc myProcedure() {
+        return 5;
+    }
+    
+    var x = myProcedure();
+    """
+        runTestApp(programText)
+    }
+
+
+    @Test
+    @DisplayName("Conflicting function declaration.")
+    fun testConflictingFunctionDeclaration() {
+        val programText = """
+    func add(a: number, b: number) {
+        return a + b;
+    }
+    func add(a: number, b: number) {
+        return a - b;
+    }
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Invalid binary operation.")
+    fun testInvalidBinaryOperation() {
+        val programText = """
+    var x = 10 + "test";
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Invalid unary operation.")
+    fun testInvalidUnaryOperation() {
+        val programText = """
+    var x = 10;
+    var y = !x;
+    """
+        runTestApp(programText)
+    }
+
+    @Test
+    @DisplayName("Unresolved function call.")
+    fun testUnresolvedFunctionCall() {
+        val programText = """
+    var result = myFunc(10, 20);
+    """
+        runTestApp(programText)
+    }
+
 }

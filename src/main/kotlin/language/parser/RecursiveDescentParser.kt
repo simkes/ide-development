@@ -16,10 +16,8 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         return Pair(program, errors)
     }
 
-    private fun statement(): Stmt? {
+    private fun statement(): Stmt {
         val startToken = currentTokenIndex
-        if(currentTokenIndex == tokens.size)
-            return null
         try {
             return when (val token = peekToken()) {
                 is VarKeywordToken -> varDeclaration()
@@ -31,19 +29,19 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
                 is FuncKeywordToken -> funcDeclaration()
                 is ReturnKeywordToken -> returnStatement()
                 is ProcKeywordToken -> procDeclaration()
-                else -> throw IllegalArgumentException("Unexpected ${tokenToErrorName(token)}.")
+                else -> {
+                    nextToken()
+                    throw IllegalArgumentException("Unexpected ${tokenToErrorName(token)}.")
+                }
             }
         } catch (e: IllegalArgumentException) {
-            if(currentTokenIndex == tokens.size)
-                currentTokenIndex -= 1
-            val message = if (e.message == null || peekToken() is UnrecognizedToken) {
+            // TODO: check if we skip statement in case of Unrecognized token
+            val message = if (e.message == null || tokens[currentTokenIndex - 1] is UnrecognizedToken) {
                 ""
             } else {
                 e.message!!
             }
-            val invalidStmt = Stmt.InvalidStatement(message, startToken, currentTokenIndex)
-            currentTokenIndex++
-            return invalidStmt
+            return Stmt.InvalidStatement(message, startToken, currentTokenIndex - 1)
         }
     }
 
@@ -243,7 +241,6 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
             }
             is OpToken -> Expr.UnaryOp(token, factor(), startToken, currentTokenIndex - 1)
             else -> {
-                currentTokenIndex-= 1
                 throw IllegalArgumentException("Empty expression.")
             }
         }
@@ -270,7 +267,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
             return factor()
         val startToken = currentTokenIndex
         var curExpr = expression(priority + 1)
-        while (getPriority(peekOp()) == priority) {
+        while (currentTokenIndex < tokens.size && getPriority(peekOp()) == priority) {
             val op = nextOp()
             val nextExpr = expression(priority + 1)
             curExpr = Expr.BinaryOp(op, curExpr, nextExpr, startToken, currentTokenIndex - 1)
@@ -283,7 +280,11 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     private fun peekOp(): OpToken? = (peekToken() as? OpToken)
     private fun nextOp(): OpToken = (nextToken() as OpToken)
 
-    private fun checkToken(expected: Token): Boolean = peekToken() == expected
+    private fun checkToken(expected: Token): Boolean {
+        if(currentTokenIndex == tokens.size)
+            return false
+        return peekToken() == expected
+    }
 
     private fun consumeToken(expected: Token) {
         if(currentTokenIndex == tokens.size)

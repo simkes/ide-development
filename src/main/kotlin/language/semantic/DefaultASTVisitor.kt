@@ -14,6 +14,7 @@ class DefaultASTVisitor : Visitor {
         val name = node.identifier.name
         if (symbolTables.lookUpInParentChain { st -> st.contains(name) } != null) {
             semanticErrors.add(SemanticError(node, "Conflicting declaration of $name."))
+            return Type.UNKNOWN
         }
         symbolTables.currentValue()!!.define(TypedSymbol(name, exprType))
         return Type.UNKNOWN
@@ -44,7 +45,7 @@ class DefaultASTVisitor : Visitor {
         if (condType != Type.BOOL && condType != Type.UNKNOWN) {
             semanticErrors.add(
                 SemanticError(
-                    node,
+                    node.condition,
                     "Expected type: ${typeToErrorName[Type.BOOL]}, got: ${typeToErrorName[condType]}."
                 )
             )
@@ -163,6 +164,16 @@ class DefaultASTVisitor : Visitor {
                     }."
                 )
             )
+            return Type.UNKNOWN
+        }
+        if (st.resolve(name,argTypes) is FuncSymbol) {
+            semanticErrors.add(
+                SemanticError(
+                    node, "The return value of the function ${
+                        SymbolTable.generateCallableSignature(name, argTypes)
+                    } is not being used."
+                )
+            )
         }
         return Type.UNKNOWN
     }
@@ -239,6 +250,16 @@ class DefaultASTVisitor : Visitor {
                     node, "Unresolved overload of function ${
                         SymbolTable.generateCallableSignature(name, argTypes)
                     }."
+                )
+            )
+            return Type.UNKNOWN
+        }
+        if (st.resolve(name,argTypes) is ProcSymbol) {
+            semanticErrors.add(
+                SemanticError(
+                    node, "Expected value, got procedure ${
+                        SymbolTable.generateCallableSignature(name, argTypes)
+                    } call."
                 )
             )
             return Type.UNKNOWN
