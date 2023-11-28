@@ -1,5 +1,6 @@
 package language.parser
 
+import language.AnalysisError
 import language.lexer.*
 import kotlin.IllegalStateException
 import kotlin.reflect.KClass
@@ -8,9 +9,9 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
 
     private var currentTokenIndex = 0
 
-    private val errors = mutableListOf<Stmt.InvalidStatement>()
+    private val errors = mutableListOf<AnalysisError>()
 
-    fun parse(): Pair<Stmt.Block, List<Stmt.InvalidStatement>> {
+    fun parse(): Pair<Stmt.Block, MutableList<AnalysisError>> {
         val program = block(false)
         expectEndOfInput()
         return Pair(program, errors)
@@ -142,7 +143,8 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
     private fun addInvalidStatement(newStatements: MutableList<Stmt>, newEnd: Int) {
         val firstInvalidStatement = newStatements.last() as Stmt.InvalidStatement
         newStatements[newStatements.size - 1] = firstInvalidStatement.copy(end = newEnd)
-        errors.add(newStatements.last() as Stmt.InvalidStatement)
+        val invalidStmt = newStatements.last() as Stmt.InvalidStatement
+        errors.add(AnalysisError(invalidStmt, invalidStmt.errorMessage))
     }
 
     private fun block(withBraces: Boolean = true): Stmt.Block {

@@ -1,10 +1,10 @@
 package language.semantic
 
 import dataStructures.SpaghettiStack
+import language.AnalysisError
 import language.parser.*
-data class SemanticError(val node: ASTNode, val errorMessage: String)
 interface Visitor {
-    fun getErrors(): List<SemanticError>
+    fun getErrors(): List<AnalysisError>
     fun visit(node: Stmt.VarDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.Assignment, symbolTables: SpaghettiStack<SymbolTable>): Any
     fun visit(node: Stmt.IfStatement, symbolTables: SpaghettiStack<SymbolTable>): Any

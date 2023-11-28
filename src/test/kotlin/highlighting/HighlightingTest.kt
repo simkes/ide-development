@@ -11,39 +11,52 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import dataStructures.SpaghettiStack
-import language.lexer.Lexer
-import language.parser.RecursiveDescentParser
-import language.semantic.DefaultASTVisitor
+import language.AnalysisError
+import language.CodeAnalyzer
+import language.Level
+import language.lexer.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class HighlightingTest {
+
+    private fun createHighlighter(tokenWithOffset: TokenWithOffset): Highlighter {
+        val startOffset = tokenWithOffset.startOffset
+        val endOffset = tokenWithOffset.endOffset
+        return when (tokenWithOffset.token) {
+            is IdentifierToken -> Highlighter(startOffset, endOffset, highlighting.Color.PURPLE)
+            is ConstantToken -> Highlighter(startOffset, endOffset, highlighting.Color.BLUE)
+            is StringLiteralToken -> Highlighter(startOffset, endOffset, highlighting.Color.GREEN)
+            is BoolToken, is KeywordToken -> Highlighter(startOffset, endOffset, highlighting.Color.ORANGE)
+            is UnrecognizedToken -> Highlighter(
+                startOffset,
+                endOffset,
+                highlighting.Color.RED,
+                false,
+                (tokenWithOffset.token as UnrecognizedToken).errorMessage
+            )
+
+            else -> Highlighter(startOffset, endOffset)
+        }
+    }
+
+    private fun createHighlighter(analysisError: AnalysisError, tokens: List<TokenWithOffset>): Highlighter {
+        val startOffset = tokens[analysisError.node.start].startOffset
+        val endOffset = tokens[analysisError.node.end].endOffset
+        return Highlighter(startOffset, endOffset, highlighting.Color.BLACK, true, analysisError.errorMessage)
+    }
     private fun getHighlighters(text: String): List<Highlighter> {
-        val lexer = Lexer(text)
-        val tokensWithOffset = lexer.tokenize()
-        val parser = RecursiveDescentParser(tokensWithOffset.map { tokenWithOffset -> tokenWithOffset.token })
-        val (AST, syntaxErrors) = parser.parse()
-        val visitor = DefaultASTVisitor()
-        visitor.visit(AST, SpaghettiStack())
-        val lexicalHighlighters = tokensWithOffset.map { tokenWithOffset -> createHighlighter(tokenWithOffset) }
-        val syntaxErrorsHighlighters =
-            syntaxErrors.map { invalidStatement -> createHighlighter(invalidStatement, tokensWithOffset) }
-        val semanticErrorsHighlighters = visitor.getErrors().map {error -> createHighlighter(error, tokensWithOffset) }
-        val lexicalAndSyntaxMerged = mergeHighlighters(lexicalHighlighters, syntaxErrorsHighlighters)
-        // TODO: merge lexicalHighlighters & syntaxErrorsHighlighters by creating separate highlighter in intersections (taking color
-        // TODO: from lexical and underline from syntax, error message from lexical but if empty - from syntax, sort by startOffset
-        // TODO: merge to them semantic errors highlighting win underlining
-        return mergeHighlighters(lexicalAndSyntaxMerged, semanticErrorsHighlighters)
+        val (tokens, errors) = CodeAnalyzer.analyze(text, Level.SEMANTIC)
+        val lexicalHighlighters = tokens.map { tk -> createHighlighter(tk) }
+        val errorHighlighters =
+            errors.map { error -> createHighlighter(error, tokens) }.sortedBy { highlighter -> highlighter.startOffset }
+        return mergeHighlighters(lexicalHighlighters, errorHighlighters)
     }
 
     private fun mergeHighlighters(primary: List<Highlighter>, secondary: List<Highlighter>): List<Highlighter> {

@@ -1,19 +1,20 @@
 package language.semantic
 
 import dataStructures.SpaghettiStack
+import language.AnalysisError
 import language.lexer.*
 import language.parser.*
 
 
 class DefaultASTVisitor : Visitor {
 
-    private val semanticErrors = mutableListOf<SemanticError>()
-    override fun getErrors(): List<SemanticError> = semanticErrors
+    private val semanticErrors = mutableListOf<AnalysisError>()
+    override fun getErrors(): List<AnalysisError> = semanticErrors
     override fun visit(node: Stmt.VarDeclaration, symbolTables: SpaghettiStack<SymbolTable>): Type {
         val exprType = node.expr.accept(this, symbolTables) as Type
         val name = node.identifier.name
         if (symbolTables.lookUpInParentChain { st -> st.contains(name) } != null) {
-            semanticErrors.add(SemanticError(node, "Conflicting declaration of $name."))
+            semanticErrors.add(AnalysisError(node, "Conflicting declaration of $name."))
             return Type.UNKNOWN
         }
         symbolTables.currentValue()!!.define(TypedSymbol(name, exprType))
@@ -24,14 +25,14 @@ class DefaultASTVisitor : Visitor {
         val name = node.identifier.name
         val st = symbolTables.lookUpInParentChain { st -> st.contains(name) }
         if (st == null) {
-            semanticErrors.add(SemanticError(node, "Unresolved variable $name."))
+            semanticErrors.add(AnalysisError(node, "Unresolved variable $name."))
             return Type.UNKNOWN
         }
         val varType = (st.resolve(name)!! as TypedSymbol).type
         val exprType = node.expr.accept(this, symbolTables) as Type
         if (varType != Type.UNKNOWN && exprType != Type.UNKNOWN && varType != exprType) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Type mismatch. Expected: ${typeToErrorName.getValue(varType)}, got: ${typeToErrorName[exprType]}"
                 )
@@ -44,7 +45,7 @@ class DefaultASTVisitor : Visitor {
         val condType = node.condition.accept(this, symbolTables) as Type
         if (condType != Type.BOOL && condType != Type.UNKNOWN) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node.condition,
                     "Expected type: ${typeToErrorName[Type.BOOL]}, got: ${typeToErrorName[condType]}."
                 )
@@ -61,7 +62,7 @@ class DefaultASTVisitor : Visitor {
         val condType = node.condition.accept(this, symbolTables) as Type
         if (condType != Type.BOOL && condType != Type.UNKNOWN) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Expected type: ${typeToErrorName[Type.BOOL]}, got: ${typeToErrorName[condType]}."
                 )
@@ -99,7 +100,7 @@ class DefaultASTVisitor : Visitor {
         val name = node.identifier.name
         if (symbolTables.lookUpInParentChain { st -> st.contains(name, parameterTypes) } != null) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Conflicting declaration of function ${
                         SymbolTable.generateCallableSignature(name, parameterTypes)
@@ -113,7 +114,7 @@ class DefaultASTVisitor : Visitor {
         val (type, returnStmt) = node.block.accept(this, symbolTables) as Pair<Type, Boolean>
         symbolTables.exitNode()
         if (!returnStmt) {
-            semanticErrors.add(SemanticError(node, "A 'return' expression required in a function body."))
+            semanticErrors.add(AnalysisError(node, "A 'return' expression required in a function body."))
         }
         symbolTables.currentValue()!!.define(FuncSymbol(name, parameters, type))
         return Type.UNKNOWN
@@ -129,7 +130,7 @@ class DefaultASTVisitor : Visitor {
         val name = node.identifier.name
         if (symbolTables.lookUpInParentChain { st -> st.contains(name, parameterTypes) } != null) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Conflicting declaration of procedure ${
                         SymbolTable.generateCallableSignature(name, parameterTypes)
@@ -143,7 +144,7 @@ class DefaultASTVisitor : Visitor {
         val (_, returnStmt) = node.block.accept(this, symbolTables) as Pair<*, Boolean>
         symbolTables.exitNode()
         if (returnStmt) {
-            semanticErrors.add(SemanticError(node, "Unexpected 'return' in a procedure body."))
+            semanticErrors.add(AnalysisError(node, "Unexpected 'return' in a procedure body."))
         }
         symbolTables.currentValue()!!.define(ProcSymbol(name, parameters))
         return Type.UNKNOWN
@@ -158,7 +159,7 @@ class DefaultASTVisitor : Visitor {
         val st = symbolTables.lookUpInParentChain { it.contains(name, argTypes) }
         if (st == null) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node, "Unresolved overload of procedure ${
                         SymbolTable.generateCallableSignature(name, argTypes)
                     }."
@@ -168,7 +169,7 @@ class DefaultASTVisitor : Visitor {
         }
         if (st.resolve(name,argTypes) is FuncSymbol) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node, "The return value of the function ${
                         SymbolTable.generateCallableSignature(name, argTypes)
                     } is not being used."
@@ -192,7 +193,7 @@ class DefaultASTVisitor : Visitor {
         if (leftType == Type.UNKNOWN || rightType == Type.UNKNOWN)
             return Type.UNKNOWN
         if (!node.operation.binary) {
-            semanticErrors.add(SemanticError(node, "Expected binary operation."))
+            semanticErrors.add(AnalysisError(node, "Expected binary operation."))
         }
         return when {
             node.operation is ArithmeticOpToken && leftType == Type.NUMBER && rightType == Type.NUMBER -> Type.NUMBER
@@ -202,7 +203,7 @@ class DefaultASTVisitor : Visitor {
             node.operation is NumericRelationOpToken && leftType == Type.NUMBER && rightType == Type.NUMBER -> Type.BOOL
             else -> {
                 // TODO: type mismatch of args or operation with args
-                semanticErrors.add(SemanticError(node, "Invalid binary operation."))
+                semanticErrors.add(AnalysisError(node, "Invalid binary operation."))
                 Type.UNKNOWN
             }
         }
@@ -210,7 +211,7 @@ class DefaultASTVisitor : Visitor {
 
     override fun visit(node: Expr.UnaryOp, symbolTables: SpaghettiStack<SymbolTable>): Type {
         if (!node.operation.unary) {
-            semanticErrors.add(SemanticError(node, "Unexpected operation."))
+            semanticErrors.add(AnalysisError(node, "Unexpected operation."))
             return Type.UNKNOWN
         }
         val exprType = node.expr.accept(this, symbolTables) as Type
@@ -218,7 +219,7 @@ class DefaultASTVisitor : Visitor {
             return exprType
         if (node.operation is ArithmeticOpToken && exprType != Type.NUMBER) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Type mismatch. Expected: ${typeToErrorName[Type.NUMBER]}, got: ${typeToErrorName[exprType]}."
                 )
@@ -227,7 +228,7 @@ class DefaultASTVisitor : Visitor {
         }
         if (node.operation is BoolOpToken && exprType != Type.BOOL) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node,
                     "Type mismatch. Expected: ${typeToErrorName[Type.BOOL]}, got: ${typeToErrorName[exprType]}."
                 )
@@ -246,7 +247,7 @@ class DefaultASTVisitor : Visitor {
         val st = symbolTables.lookUpInParentChain { it.contains(name, argTypes) }
         if (st == null) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node, "Unresolved overload of function ${
                         SymbolTable.generateCallableSignature(name, argTypes)
                     }."
@@ -256,7 +257,7 @@ class DefaultASTVisitor : Visitor {
         }
         if (st.resolve(name,argTypes) is ProcSymbol) {
             semanticErrors.add(
-                SemanticError(
+                AnalysisError(
                     node, "Expected value, got procedure ${
                         SymbolTable.generateCallableSignature(name, argTypes)
                     } call."
@@ -271,7 +272,7 @@ class DefaultASTVisitor : Visitor {
         val name = node.name.name
         val st = symbolTables.lookUpInParentChain { st -> st.contains(name) }
         if (st == null) {
-            semanticErrors.add(SemanticError(node, "Unresolved variable $name."))
+            semanticErrors.add(AnalysisError(node, "Unresolved variable $name."))
             return Type.UNKNOWN
         }
         return (st.resolve(name) as TypedSymbol).type
