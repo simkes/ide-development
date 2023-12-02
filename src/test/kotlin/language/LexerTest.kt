@@ -1,44 +1,22 @@
-import language.*
+package language
+
+import language.lexer.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 class LexerTest {
-
-    private fun runTest(input: String, expectedTokens: List<Token>) {
+    private fun runTest(input: String, expectedTokens: List<Token>, parsedWithError: Boolean = false) {
         val lexer = Lexer(input)
-        val actualTokens = lexer.tokenize()
+        val actualTokens = lexer.tokenize().map { tokenWithOffset -> tokenWithOffset.token }
         assertEquals(expectedTokens.size, actualTokens.size, "Size mismatch.")
         expectedTokens.zip(actualTokens).forEachIndexed { index, (expected, actual) ->
-            assertEquals(expected::class, actual::class, "Token at index $index is not of the expected type")
-            when (expected) {
-                is IdentifierToken -> assertEquals(
-                    expected.name,
-                    (actual as IdentifierToken).name,
-                    "Identifier value mismatch at index $index"
-                )
-
-                is ConstantToken -> assertEquals(
-                    expected.value,
-                    (actual as ConstantToken).value,
-                    "Constant value mismatch at index $index"
-                )
-
-                is StringLiteralToken -> assertEquals(
-                    expected.value,
-                    (actual as StringLiteralToken).value,
-                    "String literal value mismatch at index $index"
-                )
-
-                is OperatorToken -> assertEquals(
-                    expected.symbol,
-                    (actual as OperatorToken).symbol,
-                    "Operator symbol mismatch at index $index"
-                )
-
-                else -> Unit
-            }
+            assertTrue(
+                compare(expected, actual),
+                "Actual $actual does not match expected $expected at position $index."
+            )
         }
+        assertEquals(parsedWithError, lexer.tokenizedWithError)
     }
 
     @Test
@@ -62,19 +40,19 @@ class LexerTest {
     @Test
     @DisplayName("Test tokenization of a boolean true")
     fun testBoolTrueToken() {
-        runTest("true", listOf(BoolTrueToken))
+        runTest("true", listOf(BoolToken(true)))
     }
 
     @Test
     @DisplayName("Test tokenization of a boolean false")
     fun testBoolFalseToken() {
-        runTest("false", listOf(BoolFalseToken))
+        runTest("false", listOf(BoolToken(false)))
     }
 
     @Test
     @DisplayName("Test tokenization of an arithmetic operator")
     fun testArithmeticOperatorToken() {
-        runTest("+", listOf(ArithmeticOperatorToken("+")))
+        runTest("+", listOf(PlusOpToken))
     }
 
     @Test
@@ -118,10 +96,10 @@ class LexerTest {
                 IdentifierToken("result"),
                 AssignToken,
                 ConstantToken(3),
-                ArithmeticOperatorToken("+"),
+                PlusOpToken,
                 LeftParenToken,
                 ConstantToken(2),
-                ArithmeticOperatorToken("*"),
+                MulOpToken,
                 IdentifierToken("x"),
                 RightParenToken,
                 SemicolonToken
@@ -136,9 +114,9 @@ class LexerTest {
             "a && b || c",
             listOf(
                 IdentifierToken("a"),
-                BooleanOperatorToken("&&"),
+                AndOpToken,
                 IdentifierToken("b"),
-                BooleanOperatorToken("||"),
+                OrOpToken,
                 IdentifierToken("c")
             )
         )
@@ -151,7 +129,7 @@ class LexerTest {
             "x <= 10",
             listOf(
                 IdentifierToken("x"),
-                RelationalOperatorToken("<="),
+                NumericRelationOpToken("<="),
                 ConstantToken(10)
             )
         )
@@ -196,7 +174,7 @@ class LexerTest {
                 VarKeywordToken,
                 IdentifierToken("isTrue"),
                 AssignToken,
-                BoolTrueToken,
+                BoolToken(true),
                 SemicolonToken
             )
         )
@@ -212,7 +190,7 @@ class LexerTest {
                 IdentifierToken("sum"),
                 AssignToken,
                 IdentifierToken("x"),
-                ArithmeticOperatorToken("+"),
+                PlusOpToken,
                 ConstantToken(10),
                 SemicolonToken
             )
@@ -230,14 +208,14 @@ class LexerTest {
                 AssignToken,
                 LeftParenToken,
                 IdentifierToken("x"),
-                RelationalOperatorToken(">"),
+                NumericRelationOpToken(">"),
                 ConstantToken(4),
                 RightParenToken,
-                BooleanOperatorToken("&&"),
+                AndOpToken,
                 LeftParenToken,
                 IdentifierToken("z"),
-                RelationalOperatorToken("=="),
-                BoolTrueToken,
+                EqOpToken,
+                BoolToken(true),
                 RightParenToken,
                 SemicolonToken
             )
@@ -253,7 +231,7 @@ class LexerTest {
                 IfKeywordToken,
                 LeftParenToken,
                 IdentifierToken("x"),
-                RelationalOperatorToken(">"),
+                NumericRelationOpToken(">"),
                 ConstantToken(10),
                 RightParenToken,
                 LeftBraceToken,
@@ -308,14 +286,14 @@ class LexerTest {
                 WhileKeywordToken,
                 LeftParenToken,
                 IdentifierToken("i"),
-                RelationalOperatorToken("<"),
+                NumericRelationOpToken("<"),
                 ConstantToken(5),
                 RightParenToken,
                 LeftBraceToken,
                 IdentifierToken("i"),
                 AssignToken,
                 IdentifierToken("i"),
-                ArithmeticOperatorToken("+"),
+                PlusOpToken,
                 ConstantToken(1),
                 SemicolonToken,
                 RightBraceToken
@@ -343,7 +321,7 @@ class LexerTest {
                 LeftBraceToken,
                 ReturnKeywordToken,
                 IdentifierToken("a"),
-                ArithmeticOperatorToken("+"),
+                PlusOpToken,
                 IdentifierToken("b"),
                 SemicolonToken,
                 RightBraceToken
@@ -389,12 +367,57 @@ class LexerTest {
                 PrintKeywordToken,
                 LeftParenToken,
                 IdentifierToken("y"),
-                StringOperatorToken("%"),
+                StringOpToken,
                 StringLiteralToken(" there!"),
                 RightParenToken,
                 SemicolonToken
             )
         )
     }
+
+    @Test
+    @DisplayName("Test tokenization of function declaration with error")
+    fun testFunctionBadDeclaration() {
+        runTest(
+            input = "func add(a: number, b: number) & return a _ b; }",
+            expectedTokens = listOf(
+                FuncKeywordToken,
+                IdentifierToken("add"),
+                LeftParenToken,
+                IdentifierToken("a"),
+                ColonToken,
+                NumberTypeToken,
+                CommaToken,
+                IdentifierToken("b"),
+                ColonToken,
+                NumberTypeToken,
+                RightParenToken,
+                UnrecognizedToken("Unexpected symbol."),
+                ReturnKeywordToken,
+                IdentifierToken("a"),
+                UnrecognizedToken("Unexpected symbol."),
+                IdentifierToken("b"),
+                SemicolonToken,
+                RightBraceToken
+            ),
+            parsedWithError = true
+        )
+    }
+
+    @Test
+    @DisplayName("Test tokenization of string without quote")
+    fun testStringWithoutQuote() {
+        runTest(
+            input = """var greeting = "Hello, IDELang!;""",
+            expectedTokens = listOf(
+                VarKeywordToken,
+                IdentifierToken("greeting"),
+                AssignToken,
+                UnrecognizedToken("Expected '$QUOTE'.")
+            ),
+            parsedWithError = true
+        )
+    }
+
 }
 

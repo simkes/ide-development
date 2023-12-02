@@ -6,9 +6,11 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -129,6 +131,9 @@ class App {
             }
         }
         MaterialTheme {
+            if (fileChooseDialogVisible.value) {
+                fileDialog()
+            }
             Row {
                 Column(modifier = Modifier.weight(1f)) {
                     FileTree(root.value!!, modifier = Modifier.weight(9f), onFileNavigatorFileClick)
