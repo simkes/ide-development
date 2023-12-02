@@ -6,9 +6,13 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -25,7 +29,7 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import editor.*
+import editor.EditorViewModel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -38,6 +42,7 @@ import kotlin.math.min
 
 class App {
     private val viewModel = EditorViewModel
+
     @OptIn(DelicateCoroutinesApi::class)
     private val eventProcessor = UiEventProcessor(GlobalScope)
     private val onFileNavigatorFileClick = { treeNode: FileTreeNode ->
@@ -113,6 +118,10 @@ class App {
         val textMeasurer = rememberTextMeasurer()
         val requester = remember { FocusRequester() }
         val caretVisible = remember { mutableStateOf(true) }
+
+        val horizontalScrollState = rememberScrollState(0)
+        val verticalScrollState = rememberScrollState(0)
+
         LaunchedEffect(Unit) {
             while (true) {
                 caretVisible.value = !caretVisible.value
@@ -129,10 +138,14 @@ class App {
                         Text("Choose directory")
                     }
                 }
-
-                Column(modifier = Modifier.weight(2f).onPreviewKeyEvent { handleKeyEvent(it) }) {
-                    Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
-                        .focusRequester(requester).fillMaxWidth().weight(1f)) {
+                Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }.weight(2f)) {
+                    Canvas(modifier = Modifier.focusable(true)
+                        .clickable { requester.requestFocus() }
+                        .focusRequester(requester)
+                        .fillMaxSize()
+                        .scrollable(verticalScrollState, Orientation.Vertical)
+                        .scrollable(horizontalScrollState, Orientation.Horizontal)
+                    ) {
                         text.let {
                             val textStyle = TextStyle(fontSize = 20.sp)
                             val measuredText = textMeasurer.measure(
@@ -157,7 +170,23 @@ class App {
                                 ).size.width.toFloat()
                             }
 
-                            translate(50f, 50f) {
+                            translate(
+                                60f - horizontalScrollState.value,
+                                60f - verticalScrollState.value
+                            ) {
+                                // drawing line numbers
+                                for ((index, line) in lines.withIndex()) {
+                                    val lineNumberString = AnnotatedString((index + 1).toString())
+                                    val lineNumberLayout = textMeasurer.measure(
+                                        lineNumberString,
+                                        style = textStyle.copy(color = Color.Gray)
+                                    )
+                                    drawText(
+                                        lineNumberLayout,
+                                        topLeft = Offset(-55f, (index * charHeight).toFloat())
+                                    )
+                                }
+
                                 drawText(measuredText)
 
                                 if (caretVisible.value) {
