@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
-import java.nio.file.Path
+import java.net.URI
 
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
@@ -23,7 +23,7 @@ object EditorViewModel {
     }
 
     private val documentManager: DocumentManager = DocumentManagerImpl(scope)
-    private val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl()
+    val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
 
     private var caretLine = 0
     private var lineStartOffset = 0
@@ -77,9 +77,9 @@ object EditorViewModel {
         }
     }
 
-    fun onFileOpening(filePath: String) {
-        val path = Path.of(filePath)
-        val virtualFile = virtualFileSystem.getFileByPath(path)
+    fun onFileOpening(filePath: URI) {
+        val virtualFile = virtualFileSystem.getFile(filePath)
+        reset()
         _currentDocument = documentManager.openDocument(virtualFile)
 
         scope.launch(Dispatchers.IO) {
@@ -135,6 +135,14 @@ object EditorViewModel {
     private fun updateLine() {
         val (start, end) = _currentDocument.getLineOffsets(caretLine)
         lineStartOffset = start; lineEndOffset = end
+    }
+
+    private fun reset() {
+        caretLine = 0
+        lineStartOffset = 0
+        lineEndOffset = 0
+        rememberedOffset = 0
+        text.value = ""
     }
 
     // TODO: test only

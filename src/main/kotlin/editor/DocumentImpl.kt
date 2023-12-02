@@ -1,5 +1,6 @@
 package editor
 
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 class DocumentImpl(initialText: String = "") : Document {
@@ -27,8 +28,9 @@ class DocumentImpl(initialText: String = "") : Document {
 
     override fun getLineCount() = _text.lineCount
 
+    @OptIn(FlowPreview::class)
     override suspend fun subscribe(flow: StateFlow<ByteArray>) {
-        flow.collect {ba ->
+        flow.debounce(1000).collect { ba ->
             mutableText.update { ba.decodeToString() }
             _text = SimpleArrayTextBuffer(ba.decodeToString())
             println("Updated contents of the document")
