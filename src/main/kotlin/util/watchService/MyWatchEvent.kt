@@ -1,4 +1,12 @@
 package util.watchService
 
-class MyWatchEvent {
+import java.nio.file.Path
+
+data class MyWatchEvent (val file: Path, val kind: Kind) {
+    enum class Kind {
+        Created,
+        Modified,
+        Deleted,
+        ChannelInitialized
+    }
 }

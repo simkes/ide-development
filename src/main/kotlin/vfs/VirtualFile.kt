@@ -1,21 +1,23 @@
 package vfs
 
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 sealed interface VirtualFile {
-    var contents: ByteArray
     val contentsFlow: StateFlow<ByteArray>
-        get() = MutableStateFlow(contents).asStateFlow()
+
+    fun isDirectory(): Boolean
+    fun isValid(): Boolean
 
     fun getName(): String
     fun getBinaryContent(): ByteArray
+    fun getBinaryContentFromSource(): ByteArray
     fun setBinaryContent(newContent: ByteArray)
-    @OptIn(FlowPreview::class)
-    suspend fun subscribe(flow: StateFlow<String>) {
-        flow.debounce(500).collect {
-            contents = it.encodeToByteArray()
-            println("Updated contents of the file")
-        }
-    }
+    fun setBinaryContentInSource(newContent: ByteArray)
+    fun createChildFile(childName: String): VirtualFile
+    fun createChildDir(childName: String): VirtualFile
+    fun move(newParent: VirtualFile)
+    fun copy(newParent: VirtualFile, copyName: String)
+    fun delete()
+    fun rename(newName: String)
+    suspend fun subscribe(flow: StateFlow<String>)
 }

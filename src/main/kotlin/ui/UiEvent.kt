@@ -4,6 +4,8 @@ import Direction
 import androidx.compose.ui.input.key.Key
 import arrowEventToDirection
 import editor.EditorViewModel
+import java.net.URI
+import java.nio.file.Path
 
 /**
  * Base interface for all events that are caused by UI and need to update the model.
@@ -41,5 +43,11 @@ class BackspaceKeyEvent : UiEvent {
 class FileSaveRequestEvent : UiEvent {
     override suspend fun process() {
         EditorViewModel.onFileSave()
+    }
+}
+
+class OpenFileInEditorEvent(private val file: URI) : UiEvent {
+    override suspend fun process() {
+        EditorViewModel.onFileOpening(file)
     }
 }
