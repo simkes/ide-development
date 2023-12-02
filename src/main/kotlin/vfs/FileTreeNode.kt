@@ -1,0 +1,4 @@
+package vfs
+
+class FileTreeNode {
+}
