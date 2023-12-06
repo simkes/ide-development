@@ -15,6 +15,8 @@ class DiskVirtualFile(val path: Path, private val vfs: VirtualFileSystem) :
     override val contentsFlow: StateFlow<ByteArray>
         get() = content.asStateFlow()
 
+    override val uri: URI = path.toUri()
+
     override fun isDirectory() = path.isDirectory()
 
     override fun isValid() = path.exists()

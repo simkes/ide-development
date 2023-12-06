@@ -171,4 +171,7 @@ class CaretNavigationTest {
             }
         }
     }
+
+    // TODO: remove newline in the middle
+    // TODO: left = down after opening
 }

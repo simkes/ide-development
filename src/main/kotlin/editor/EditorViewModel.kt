@@ -1,20 +1,25 @@
 package editor
 
 import Direction
+import OPENED_DOCUMENTS_LIMIT
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
 import java.net.URI
+import javax.print.Doc
 
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
     var text = mutableStateOf("")
+    val highlighters get() = _currentDocument.highlighters
+
 
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = GlobalScope
 
-    private var _currentDocument: Document = DocumentImpl().also {
+    private var _currentDocument: Document = DocumentImpl(fileURI = URI("")).also {
         scope.launch(Dispatchers.IO) {
             it.observableText.collect {
                 text.value = it
@@ -25,62 +30,16 @@ object EditorViewModel {
     private val documentManager: DocumentManager = DocumentManagerImpl(scope)
     val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
 
-    private var caretLine = 0
-    private var lineStartOffset = 0
-
-    private var lineEndOffset = 0
-    private val lineLength get() = lineEndOffset - lineStartOffset
-
-    private val caretOffset get() = minOf(lineStartOffset + rememberedOffset, lineEndOffset)
-    private var rememberedOffset: Int = 0
-        set(offset) {
-            field = relative(offset)
-        }
-
-    private fun relative(offset: Int) = offset - lineStartOffset
+    var openedDocuments = mutableStateOf(documentManager.openedDocuments)
 
     fun onCaretMovement(direction: Direction) {
-        when (direction) {
-            Direction.UP -> {
-                val prevLine = caretLine
-                caretLine = maxOf(0, caretLine - 1)
-                if (caretLine != prevLine) {
-                    updateLine()
-                }
-            }
-
-            Direction.DOWN -> {
-                val prevLine = caretLine
-                caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
-                if (caretLine != prevLine) {
-                    updateLine()
-                }
-            }
-
-            Direction.LEFT -> {
-                rememberedOffset = maxOf(0, caretOffset - 1)
-                if (lineStartOffset + rememberedOffset < lineStartOffset) {
-                    caretLine = maxOf(0, caretLine - 1)
-                    updateLine()
-                    rememberedOffset = lineEndOffset
-                }
-            }
-
-            Direction.RIGHT -> {
-                rememberedOffset = minOf(text.value.length, caretOffset + 1)
-                if (lineStartOffset + rememberedOffset > lineEndOffset) {
-                    caretLine = minOf(_currentDocument.getLineCount(), caretLine + 1)
-                    updateLine()
-                    rememberedOffset = lineStartOffset
-                }
-            }
-        }
+        _currentDocument.caretModel.moveCaret(direction)
     }
 
     fun onFileOpening(filePath: URI) {
         val virtualFile = virtualFileSystem.getFile(filePath)
-        reset()
         _currentDocument = documentManager.openDocument(virtualFile)
+        openedDocuments.value = documentManager.openedDocuments
 
         scope.launch(Dispatchers.IO) {
             _currentDocument.observableText.collect {
@@ -90,68 +49,34 @@ object EditorViewModel {
     }
 
     fun onCharInsertion(char: Char) {
-        _currentDocument.insertChar(char, caretOffset)
-        updateLine()
-        rememberedOffset = minOf(lineEndOffset, caretOffset) + 1
+        _currentDocument.insertChar(char)
     }
 
     fun onTextInsertion(text: String) {
-        _currentDocument.insertText(text, caretOffset)
-        updateLine()
-        rememberedOffset = minOf(lineEndOffset, caretOffset) + text.length
+        _currentDocument.insertText(text)
     }
 
-    fun getCaret(): Pair<Int, Int> = Pair(caretLine, relative(caretOffset))
+    fun getCaret(): Pair<Int, Int> = with(_currentDocument.caretModel) {
+        Pair(this.caretLine, this.caretOffset)
+    }
 
     fun onTextDeletion(step: Int = 1) {
         repeat(step) {
-            if (caretOffset != 0) {
-                _currentDocument.removeChar(caretOffset - 1)
-                rememberedOffset = maxOf(lineStartOffset, caretOffset) - 1
-                if (rememberedOffset == -1) {
-                    val prevLine = caretLine
-                    caretLine = maxOf(0, caretLine - 1)
-                    rememberedOffset = if (caretLine != prevLine) {
-                        updateLine()
-                        lineEndOffset
-                    } else {
-                        0
-                    }
-                }
-            }
+            _currentDocument.removeChar()
         }
     }
 
     fun onNewline() {
-        caretLine++
-        updateLine()
-        rememberedOffset = lineStartOffset
+        _currentDocument.caretModel.newline()
     }
 
     fun onFileSave() {
         documentManager.saveDocument(_currentDocument)
     }
 
-    private fun updateLine() {
-        val (start, end) = _currentDocument.getLineOffsets(caretLine)
-        lineStartOffset = start; lineEndOffset = end
-    }
-
-    private fun reset() {
-        caretLine = 0
-        lineStartOffset = 0
-        lineEndOffset = 0
-        rememberedOffset = 0
-        text.value = ""
-    }
-
     // TODO: test only
     fun purge() {
-        _currentDocument = DocumentImpl()
-        caretLine = 0
-        lineStartOffset = 0
-        lineEndOffset = 0
-        rememberedOffset = 0
+        _currentDocument = DocumentImpl(fileURI = URI(""))
         text.value = ""
     }
 }

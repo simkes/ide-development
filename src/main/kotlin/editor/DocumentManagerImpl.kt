@@ -1,21 +1,36 @@
 package editor
 
+import OPENED_DOCUMENTS_LIMIT
+import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import vfs.VirtualFile
+import java.net.URI
 
 class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
-    // TODO: bidi map
     private val fileToDoc: MutableMap<VirtualFile, Document> = emptyMap<VirtualFile, Document>().toMutableMap()
     private val docToFile: MutableMap<Document, VirtualFile> = emptyMap<Document, VirtualFile>().toMutableMap()
 
+    var currentDocument: Document = DocumentImpl(fileURI = URI("untitled"))
+    override val openedDocuments get() = fileToDoc.values.toList()
+
     override fun openDocument(virtualFile: VirtualFile): Document {
         if (fileToDoc.keys.contains(virtualFile)) {
+            currentDocument = fileToDoc[virtualFile]!!
             return fileToDoc[virtualFile]!!
         }
 
-        val document = DocumentImpl(virtualFile.getBinaryContent().decodeToString())
+        val document = DocumentImpl(virtualFile.getBinaryContent().decodeToString(), virtualFile.uri)
+
+        if (fileToDoc.size == OPENED_DOCUMENTS_LIMIT) {
+            val virtualFileOfCurrentDocument = docToFile[currentDocument]!!
+            saveDocument(currentDocument)
+            closeDocument(currentDocument)
+
+            fileToDoc.remove(virtualFileOfCurrentDocument)
+            docToFile.remove(currentDocument)
+        }
 
         scope.launch(Dispatchers.IO) {
             virtualFile.subscribe(document.observableText)
@@ -27,6 +42,8 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         fileToDoc[virtualFile] = document
         docToFile[document] = virtualFile
 
+        currentDocument = document
+
         return document
     }
 
@@ -35,8 +52,8 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         virtualFile.setBinaryContent(document.observableText.value.toByteArray())
     }
     override fun saveDocuments() {}
-    override fun closeDocument() {
-        TODO("Not yet implemented")
+    override fun closeDocument(document: Document) {
+        // TODO: serialize to some meta file
     }
 
 }

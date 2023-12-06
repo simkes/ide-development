@@ -7,13 +7,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -28,6 +23,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -124,6 +122,8 @@ class App {
         val horizontalScrollState = rememberScrollState(0)
         val verticalScrollState = rememberScrollState(0)
 
+        val docs = viewModel.openedDocuments
+
         LaunchedEffect(Unit) {
             while (true) {
                 caretVisible.value = !caretVisible.value
@@ -135,7 +135,7 @@ class App {
                 fileDialog()
             }
             Row {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.width(200.dp)) {
                     FileTree(root.value!!, modifier = Modifier.weight(9f), onFileNavigatorFileClick)
                     Button(modifier = Modifier.weight(1f), onClick = {
                         fileChooseDialogVisible.value = true
@@ -143,64 +143,86 @@ class App {
                         Text("Choose directory")
                     }
                 }
-                Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }.weight(2f)) {
-                    Canvas(modifier = Modifier.focusable(true)
-                        .clickable { requester.requestFocus() }
-                        .focusRequester(requester)
-                        .fillMaxSize()
-                        .scrollable(verticalScrollState, Orientation.Vertical)
-                        .scrollable(horizontalScrollState, Orientation.Horizontal)
-                    ) {
-                        text.let {
-                            val textStyle = TextStyle(fontSize = 20.sp)
-                            val measuredText = textMeasurer.measure(
-                                AnnotatedString(it),
-                                style = textStyle
-                            )
-                            val lines = it.split("\n")
-                            val (caretLine, caretPos) = viewModel.getCaret()
-                            val charHeight = measuredText.size.height / max(1, lines.size)
-                            val caretY = charHeight * caretLine.toFloat()
-                            var caretX = 0f
-                            if (lines.getOrNull(caretLine) != null) {
-                                val lineStr = AnnotatedString(
-                                    lines[caretLine].substring(
-                                        0,
-                                        min(caretPos, lines[caretLine].length)
-                                    )
-                                )
-                                caretX = textMeasurer.measure(
-                                    lineStr,
+                Column(modifier = Modifier.weight(2f)) {
+                    EditorBar(
+                        docs.value,
+                        onClick = { document ->
+                            eventProcessor.newEvent(OpenFileInEditorEvent(document.fileURI))
+                        },
+                        onClose = { _ ->
+                            // TODO("Close event")
+                        },
+                        Modifier.weight(1f)
+                    )
+                    Box(modifier = Modifier.onPreviewKeyEvent { handleKeyEvent(it) }.weight(9f)) {
+                        Canvas(modifier = Modifier.focusable(true)
+                            .clickable { requester.requestFocus() }
+                            .focusRequester(requester)
+                            .fillMaxSize()
+                            .scrollable(verticalScrollState, Orientation.Vertical)
+                            .scrollable(horizontalScrollState, Orientation.Horizontal)
+                        ) {
+                            text.let {
+                                val textStyle = TextStyle(fontSize = 13.sp, fontFamily = FontFamily.Monospace)
+                                val highlighters = viewModel.highlighters.map { highlighter ->
+                                        AnnotatedString.Range(
+                                            SpanStyle(
+                                                color = highlighterColorToComposeColor(highlighter.color),
+                                                textDecoration = if (highlighter.underlined) TextDecoration.Underline else TextDecoration.None
+                                            ),
+                                            highlighter.startOffset,
+                                            highlighter.endOffset
+                                        )
+                                    }
+                                val measuredText = textMeasurer.measure(
+                                    AnnotatedString(it, spanStyles = highlighters),
                                     style = textStyle
-                                ).size.width.toFloat()
-                            }
-
-                            translate(
-                                60f - horizontalScrollState.value,
-                                60f - verticalScrollState.value
-                            ) {
-                                // drawing line numbers
-                                for ((index, line) in lines.withIndex()) {
-                                    val lineNumberString = AnnotatedString((index + 1).toString())
-                                    val lineNumberLayout = textMeasurer.measure(
-                                        lineNumberString,
-                                        style = textStyle.copy(color = Color.Gray)
+                                )
+                                val lines = it.split("\n")
+                                val (caretLine, caretPos) = viewModel.getCaret()
+                                val charHeight = measuredText.size.height / max(1, lines.size)
+                                val caretY = charHeight * caretLine.toFloat()
+                                var caretX = 0f
+                                if (lines.getOrNull(caretLine) != null) {
+                                    val lineStr = AnnotatedString(
+                                        lines[caretLine].substring(
+                                            0,
+                                            min(caretPos, lines[caretLine].length)
+                                        )
                                     )
-                                    drawText(
-                                        lineNumberLayout,
-                                        topLeft = Offset(-55f, (index * charHeight).toFloat())
-                                    )
+                                    caretX = textMeasurer.measure(
+                                        lineStr,
+                                        style = textStyle
+                                    ).size.width.toFloat()
                                 }
 
-                                drawText(measuredText)
+                                translate(
+                                    60f - horizontalScrollState.value,
+                                    60f - verticalScrollState.value
+                                ) {
+                                    // drawing line numbers
+                                    for ((index, line) in lines.withIndex()) {
+                                        val lineNumberString = AnnotatedString((index + 1).toString())
+                                        val lineNumberLayout = textMeasurer.measure(
+                                            lineNumberString,
+                                            style = textStyle.copy(color = Color.Gray)
+                                        )
+                                        drawText(
+                                            lineNumberLayout,
+                                            topLeft = Offset(-55f, (index * charHeight).toFloat())
+                                        )
+                                    }
 
-                                if (caretVisible.value) {
-                                    drawLine(
-                                        color = Color.Black,
-                                        start = Offset(caretX, caretY),
-                                        end = Offset(caretX, caretY + charHeight),
-                                        strokeWidth = 1f
-                                    )
+                                    drawText(measuredText)
+
+                                    if (caretVisible.value) {
+                                        drawLine(
+                                            color = Color.Black,
+                                            start = Offset(caretX, caretY),
+                                            end = Offset(caretX, caretY + charHeight),
+                                            strokeWidth = 1f
+                                        )
+                                    }
                                 }
                             }
                         }

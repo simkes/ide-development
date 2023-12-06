@@ -1,9 +1,11 @@
 package vfs
 
 import kotlinx.coroutines.flow.*
+import java.net.URI
 
 sealed interface VirtualFile {
     val contentsFlow: StateFlow<ByteArray>
+    val uri: URI
 
     fun isDirectory(): Boolean
     fun isValid(): Boolean
