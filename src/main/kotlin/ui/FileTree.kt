@@ -25,8 +25,8 @@ import kotlin.io.path.absolute
  * @param modifier Compose modifier to align the tree properly
  */
 @Composable
-fun FileTree(uiModel: UIModel, modifier: Modifier) {
-    val rootNode = uiModel.root.value!!
+fun FileTree(uiModel: UIModel, modifier: Modifier) = with(uiModel) {
+    val rootNode = root.value!!
     val expandedNodes = remember { mutableStateListOf(rootNode) }
     LazyColumn(modifier = modifier) {
         Node(
@@ -43,7 +43,7 @@ fun FileTree(uiModel: UIModel, modifier: Modifier) {
                 }
             },
         ) {
-            uiModel.emit { OpenFileInEditorEvent(it.path.absolute().toUri()) }
+            emit { OpenFileInEditorEvent(it.path.absolute().toUri()) }
         }
     }
 }

@@ -12,15 +12,15 @@ import editor.Document
 import kotlin.io.path.toPath
 
 @Composable
-fun EditorBar(uiModel: UIModel, modifier: Modifier) {
+fun EditorBar(uiModel: UIModel, modifier: Modifier) = with(uiModel) {
     Row(modifier = modifier) {
-        uiModel.docs.value.forEach {
+        docs.value.forEach {
             Row(modifier = Modifier.clickable {
-                uiModel.emit { OpenFileInEditorEvent(it.fileURI) }
+                emit { OpenFileInEditorEvent(it.fileURI) }
             }) {
                 Text(it.fileURI.toPath().fileName.toString())
                 Icon(Icons.Default.Close, "", modifier = Modifier.clickable {
-                    uiModel.emit { CloseFileInEditorEvent(it.fileURI) }
+                    emit { CloseFileInEditorEvent(it.fileURI) }
                 })
             }
         }

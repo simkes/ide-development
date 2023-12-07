@@ -25,24 +25,24 @@ import kotlin.math.min
 fun EditorCanvas(
     uiModel: UIModel,
     modifier: Modifier
-) {
+) = with(uiModel) {
     val textMeasurer = rememberTextMeasurer()
-    val caretVisible = remember { uiModel.caretVisible }
+    val caretVisible = remember { caretVisible }
 
     val horizontalScrollState = rememberScrollState(0)
     val verticalScrollState = rememberScrollState(0)
 
-    Box(modifier = modifier.onKeyEvent { uiModel.handleKeyEvent(it) }) {
+    Box(modifier = modifier.onKeyEvent { handleKeyEvent(it) }) {
         Canvas(modifier = modifier.focusable(true)
-            .clickable { uiModel.requester.requestFocus() }
-            .focusRequester(uiModel.requester)
+            .clickable { requester.requestFocus() }
+            .focusRequester(requester)
             .fillMaxSize()
             .scrollable(verticalScrollState, Orientation.Vertical)
             .scrollable(horizontalScrollState, Orientation.Horizontal)
         ) {
-            uiModel.text.let {
+            text.let {
                 val textStyle = TextStyle(fontSize = 13.sp, fontFamily = FontFamily.Monospace)
-                val (colored, underlined) = uiModel.viewModel.highlighters
+                val (colored, underlined) = viewModel.highlighters
                 val highlighters = colored.map { highlighter ->
                     AnnotatedString.Range(
                         SpanStyle(
@@ -57,7 +57,7 @@ fun EditorCanvas(
                     style = textStyle
                 )
                 val lines = it.split("\n")
-                val (caretLine, caretPos) = uiModel.viewModel.getCaret()
+                val (caretLine, caretPos) = viewModel.getCaret()
                 val charHeight = measuredText.size.height / max(1, lines.size)
                 val caretY = charHeight * caretLine.toFloat()
                 var caretX = 0f

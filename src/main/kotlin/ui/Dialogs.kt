@@ -10,47 +10,49 @@ import javax.swing.JFileChooser
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun NoSourceDirectoryChosenDialog(uiModel: UIModel) = AlertDialog(
-    onDismissRequest = {
-        uiModel.applicationScope.exitApplication()
-    },
-    buttons = {
-        Row {
-            Button(
-                onClick = {
-                    uiModel.noSourceDirectoryChosenDialogVisible.value = false
-                    uiModel.fileChooseDialogVisible.value = true
+fun NoSourceDirectoryChosenDialog(uiModel: UIModel) = with(uiModel) {
+    AlertDialog(
+        onDismissRequest = {
+            applicationScope.exitApplication()
+        },
+        buttons = {
+            Row {
+                Button(
+                    onClick = {
+                        noSourceDirectoryChosenDialogVisible.value = false
+                        fileChooseDialogVisible.value = true
+                    }
+                ) {
+                    Text("Choose again")
                 }
-            ) {
-                Text("Choose again")
-            }
-            Button(
-                onClick = {
-                    uiModel.applicationScope.exitApplication()
+                Button(
+                    onClick = {
+                        applicationScope.exitApplication()
+                    }
+                ) {
+                    Text("Exit")
                 }
-            ) {
-                Text("Exit")
             }
+        },
+        text = {
+            Text("You did not choose the initial directory for your project. Please choose again or exit the IDE.")
+        },
+        title = {
+            Text("Project directory is not specified")
         }
-    },
-    text = {
-        Text("You did not chose the initial directory for your project. Please choose again or exit the IDE.")
-    },
-    title = {
-        Text("Project directory is not specified")
-    }
-)
+    )
+}
 
 @Composable
-fun FileChooserDialog(uiModel: UIModel) {
+fun FileChooserDialog(uiModel: UIModel) = with(uiModel) {
     val dialog = JFileChooser()
     dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
     dialog.isVisible = true
     dialog.showOpenDialog(null)
     if (dialog.selectedFile != null) {
-        uiModel.root.value = uiModel.viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
-    } else if (uiModel.root.value == null) {
-        uiModel.noSourceDirectoryChosenDialogVisible.value = true
+        root.value = viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
+    } else if (root.value == null) {
+        noSourceDirectoryChosenDialogVisible.value = true
     }
-    uiModel.fileChooseDialogVisible.value = false
+    fileChooseDialogVisible.value = false
 }
