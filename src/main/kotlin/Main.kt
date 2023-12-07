@@ -42,7 +42,7 @@ class App {
                         )
                         EditorCanvas(
                             uiModel,
-                            Modifier.weight(3f)
+                            Modifier.weight(9f)
                         )
                     }
                 }
