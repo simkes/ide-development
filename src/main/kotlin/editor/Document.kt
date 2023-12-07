@@ -11,7 +11,7 @@ import language.Level
 interface Document {
     val observableText: MutableState<String> // TODO: mutable public field
     val text get() = observableText.value
-    val highlighters get() = HighlighterProvider.getHighlightersMerged(text, Level.SEMANTIC)
+    val highlighters get() = HighlighterProvider.getHighlighters(text, Level.SEMANTIC)
 
     fun insertText(text: String, offset: Int) = text.forEachIndexed { index, c ->
         insertChar(c, offset + index)

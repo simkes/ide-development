@@ -17,10 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
@@ -39,6 +43,7 @@ import kotlin.math.min
 
 class App {
     private val viewModel = EditorViewModel
+
     @OptIn(DelicateCoroutinesApi::class)
     private val eventProcessor = UiEventProcessor(GlobalScope)
 
@@ -118,12 +123,12 @@ class App {
                 Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
                     .focusRequester(requester).fillMaxWidth().weight(1f)) {
                     text.let {
-                        val textStyle = TextStyle(fontSize = 20.sp)
-                        val highlighters = viewModel.highlighters.map { highlighter ->
+                        val textStyle = TextStyle(fontSize = 20.sp, fontFamily = FontFamily.Monospace)
+                        val (colored, underlined) = viewModel.highlighters
+                        val highlighters = colored.map { highlighter ->
                             AnnotatedString.Range(
                                 SpanStyle(
-                                    color = highlighterColorToComposeColor(highlighter.color),
-                                    textDecoration = if (highlighter.underlined) TextDecoration.Underline else TextDecoration.None
+                                    color = highlighterColorToComposeColor(highlighter.color)
                                 ),
                                 highlighter.startOffset,
                                 highlighter.endOffset
@@ -136,6 +141,7 @@ class App {
                         val lines = it.value.split("\n")
                         val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
+                        val charWidth = measuredText.size.width / max(1, it.value.length)
                         val caretY = charHeight * caretLine.toFloat()
                         var caretX = 0f
                         if (lines.getOrNull(caretLine) != null) {
@@ -177,6 +183,20 @@ class App {
                                     end = Offset(caretX, caretY + charHeight),
                                     strokeWidth = 1f
                                 )
+                            }
+
+                            underlined.forEach { highlighter ->
+                                if (measuredText.size.width >= highlighter.endOffset) {
+                                    val y = measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.startOffset))
+                                    val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
+                                    val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
+                                    drawLine(
+                                        color = Color.Black,
+                                        start = Offset(x1, y),
+                                        end = Offset(x2, y),
+                                        strokeWidth = 1f
+                                    )
+                                }
                             }
                         }
                     }
