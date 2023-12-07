@@ -4,8 +4,6 @@
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Button
@@ -21,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -28,15 +27,15 @@ import editor.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import java.awt.FileDialog
-import java.awt.Frame
 import ui.*
+import javax.swing.JFileChooser
 import kotlin.math.max
 import kotlin.math.min
 
 
 class App {
     private val viewModel = EditorViewModel
+
     @OptIn(DelicateCoroutinesApi::class)
     private val eventProcessor = UiEventProcessor(GlobalScope)
 
@@ -83,10 +82,12 @@ class App {
 
         @Composable
         fun fileDialog() {
-            val dialog = FileDialog(null as Frame?, "Choose a File")
+            val dialog = JFileChooser()
+            dialog.fileSelectionMode = JFileChooser.FILES_ONLY
             dialog.isVisible = true
-            if (dialog.files.isNotEmpty()) {
-                viewModel.onFileOpening(dialog.file)
+            dialog.showOpenDialog(null)
+            if (dialog.selectedFile != null) {
+                viewModel.onFileOpening(dialog.selectedFile.path)
             }
             fileChooseDialogVisible.value = false
         }
@@ -114,14 +115,25 @@ class App {
                 Canvas(modifier = Modifier.focusable(true).clickable { requester.requestFocus() }
                     .focusRequester(requester).fillMaxWidth().weight(1f)) {
                     text.let {
-                        val textStyle = TextStyle(fontSize = 20.sp)
+                        val textStyle = TextStyle(fontSize = 20.sp, fontFamily = FontFamily.Monospace)
+                        val (colored, underlined) = viewModel.highlighters
+                        val highlighters = colored.map { highlighter ->
+                            AnnotatedString.Range(
+                                SpanStyle(
+                                    color = highlighterColorToComposeColor(highlighter.color)
+                                ),
+                                highlighter.startOffset,
+                                highlighter.endOffset
+                            )
+                        }
                         val measuredText = textMeasurer.measure(
-                            AnnotatedString(it.value),
+                            AnnotatedString(it.value, spanStyles = highlighters),
                             style = textStyle
                         )
                         val lines = it.value.split("\n")
                         val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
+                        val charWidth = measuredText.size.width / max(1, it.value.length)
                         val caretY = charHeight * caretLine.toFloat()
                         var caretX = 0f
                         if (lines.getOrNull(caretLine) != null) {
@@ -163,6 +175,20 @@ class App {
                                     end = Offset(caretX, caretY + charHeight),
                                     strokeWidth = 1f
                                 )
+                            }
+
+                            underlined.forEach { highlighter ->
+                                if (measuredText.size.width >= highlighter.endOffset) {
+                                    val y = measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.startOffset))
+                                    val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
+                                    val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
+                                    drawLine(
+                                        color = Color.Red,
+                                        start = Offset(x1, y),
+                                        end = Offset(x2, y),
+                                        strokeWidth = 1f
+                                    )
+                                }
                             }
                         }
                     }
