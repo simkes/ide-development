@@ -35,9 +35,8 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         scope.launch(Dispatchers.IO) {
             virtualFile.subscribe(document.observableText)
         }
-        scope.launch {
-            document.subscribe(virtualFile.contentsFlow)
-        }
+
+        // TODO: subscribe document to changes from the source file, prompting user to choose one version
 
         fileToDoc[virtualFile] = document
         docToFile[document] = virtualFile
