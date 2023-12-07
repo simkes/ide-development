@@ -84,7 +84,9 @@ private fun LazyListScope.Node(
             listOf(
                 ContextMenuItem("New") { TODO() },
                 ContextMenuItem("Copy") { TODO() },
-                ContextMenuItem("Move") { TODO() }
+                ContextMenuItem("Copy path") { TODO() },
+                ContextMenuItem("Move") { TODO() },
+                ContextMenuItem("Delete") { TODO() },
             )
         }) {
             Row {
