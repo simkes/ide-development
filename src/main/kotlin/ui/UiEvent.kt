@@ -54,6 +54,6 @@ class OpenFileInEditorEvent(private val file: URI) : UiEvent {
 
 class CloseFileInEditorEvent(private val file: URI) : UiEvent {
     override suspend fun process() {
-        TODO("Not yet implemented")
+        EditorViewModel.onFileClosing(file)
     }
 }

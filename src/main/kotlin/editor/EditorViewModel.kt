@@ -19,16 +19,16 @@ object EditorViewModel {
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = GlobalScope
 
-    private var _currentDocument: Document = DocumentImpl(fileURI = URI("")).also {
+    private val documentManager: DocumentManager = DocumentManagerImpl(scope).also {
         scope.launch(Dispatchers.Main) {
-            it.observableText.collect {
+            it.currentDocument.observableText.collect {
                 text.value = it
             }
         }
     }
 
-    private val documentManager: DocumentManager = DocumentManagerImpl(scope)
     val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
+    private val _currentDocument get() = documentManager.currentDocument
 
     var openedDocuments = mutableStateOf(documentManager.openedDocuments)
 
@@ -38,9 +38,20 @@ object EditorViewModel {
 
     fun onFileOpening(filePath: URI) {
         val virtualFile = virtualFileSystem.getFile(filePath)
-        _currentDocument = documentManager.openDocument(virtualFile)
+        documentManager.openDocument(virtualFile)
         openedDocuments.value = documentManager.openedDocuments
 
+        scope.launch(Dispatchers.IO) {
+            _currentDocument.observableText.collect {
+                text.value = it
+            }
+        }
+    }
+
+    fun onFileClosing(filePath: URI) {
+        val virtualFile = virtualFileSystem.getFile(filePath)
+        documentManager.closeDocument(virtualFile)
+        openedDocuments.value = documentManager.openedDocuments
         scope.launch(Dispatchers.IO) {
             _currentDocument.observableText.collect {
                 text.value = it
@@ -76,7 +87,6 @@ object EditorViewModel {
 
     // TODO: test only
     fun purge() {
-        _currentDocument = DocumentImpl(fileURI = URI(""))
         text.value = ""
     }
 }

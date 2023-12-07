@@ -7,7 +7,9 @@ interface DocumentManager {
     fun saveDocument(document: Document)
     fun saveDocuments()
     fun closeDocument(document: Document)
+    fun closeDocument(correspondingVFile: VirtualFile)
 
     val openedDocuments: List<Document>
+    var currentDocument: Document
 
 }

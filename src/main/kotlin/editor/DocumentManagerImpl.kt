@@ -1,7 +1,6 @@
 package editor
 
 import OPENED_DOCUMENTS_LIMIT
-import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,7 +11,12 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
     private val fileToDoc: MutableMap<VirtualFile, Document> = emptyMap<VirtualFile, Document>().toMutableMap()
     private val docToFile: MutableMap<Document, VirtualFile> = emptyMap<Document, VirtualFile>().toMutableMap()
 
-    var currentDocument: Document = DocumentImpl(fileURI = URI("untitled"))
+    override var currentDocument: Document = DocumentImpl(fileURI = URI("untitled"))
+        set(value) = run {
+            field = value
+            field.caretModel.updateLine()
+        }
+
     override val openedDocuments get() = fileToDoc.values.toList()
 
     override fun openDocument(virtualFile: VirtualFile): Document {
@@ -24,12 +28,8 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         val document = DocumentImpl(virtualFile.getBinaryContent().decodeToString(), virtualFile.uri)
 
         if (fileToDoc.size == OPENED_DOCUMENTS_LIMIT) {
-            val virtualFileOfCurrentDocument = docToFile[currentDocument]!!
             saveDocument(currentDocument)
             closeDocument(currentDocument)
-
-            fileToDoc.remove(virtualFileOfCurrentDocument)
-            docToFile.remove(currentDocument)
         }
 
         scope.launch(Dispatchers.IO) {
@@ -42,7 +42,6 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         docToFile[document] = virtualFile
 
         currentDocument = document
-        currentDocument.caretModel.updateLine()
 
         return document
     }
@@ -53,7 +52,17 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
     }
     override fun saveDocuments() {}
     override fun closeDocument(document: Document) {
+        val correspondingVFile = docToFile[document]!!
+        fileToDoc.remove(correspondingVFile)
+        docToFile.remove(document)
+        if (document == currentDocument) {
+            currentDocument = fileToDoc.values.last()
+        }
         // TODO: serialize to some meta file
+    }
+
+    override fun closeDocument(correspondingVFile: VirtualFile) {
+        closeDocument(fileToDoc[correspondingVFile]!!)
     }
 
 }
