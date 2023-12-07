@@ -1,6 +1,7 @@
 package editor
 
 import Direction
+import highlighting.Highlighter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import vfs.VirtualFileSystem
@@ -19,7 +20,7 @@ object EditorViewModel {
     private var lineEndOffset = 0
     private val lineLength get() = lineEndOffset - lineStartOffset
 
-    val highlighters get() = _currentDocument.highlighters
+    val highlighters: Pair<List<Highlighter>, List<Highlighter>> get() = _currentDocument.highlighters
 
     private val caretOffset get() = minOf(lineStartOffset + rememberedOffset, lineEndOffset)
     private var rememberedOffset: Int = 0

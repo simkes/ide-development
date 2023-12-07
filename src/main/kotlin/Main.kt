@@ -4,8 +4,6 @@
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Button
@@ -17,15 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -33,8 +27,6 @@ import editor.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import java.awt.FileDialog
-import java.awt.Frame
 import ui.*
 import javax.swing.JFileChooser
 import kotlin.math.max
@@ -191,7 +183,7 @@ class App {
                                     val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
                                     val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
                                     drawLine(
-                                        color = Color.Black,
+                                        color = Color.Red,
                                         start = Offset(x1, y),
                                         end = Offset(x2, y),
                                         strokeWidth = 1f
