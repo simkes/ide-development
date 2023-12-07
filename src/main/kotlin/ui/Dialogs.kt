@@ -6,28 +6,27 @@ import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.window.ApplicationScope
-import java.io.File
 import javax.swing.JFileChooser
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ApplicationScope.NoSourceDirectoryChosenDialog(onChooseAgain: () -> Unit) = AlertDialog(
+fun NoSourceDirectoryChosenDialog(uiModel: UIModel) = AlertDialog(
     onDismissRequest = {
-        exitApplication()
+        uiModel.applicationScope.exitApplication()
     },
     buttons = {
         Row {
             Button(
                 onClick = {
-                    onChooseAgain()
+                    uiModel.noSourceDirectoryChosenDialogVisible.value = false
+                    uiModel.fileChooseDialogVisible.value = true
                 }
             ) {
                 Text("Choose again")
             }
             Button(
                 onClick = {
-                    exitApplication()
+                    uiModel.applicationScope.exitApplication()
                 }
             ) {
                 Text("Exit")
@@ -43,14 +42,15 @@ fun ApplicationScope.NoSourceDirectoryChosenDialog(onChooseAgain: () -> Unit) = 
 )
 
 @Composable
-fun fileDialog(fileSelected: (File) -> Unit, fileNotSelected: () -> Unit) {
+fun FileChooserDialog(uiModel: UIModel) {
     val dialog = JFileChooser()
     dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
     dialog.isVisible = true
     dialog.showOpenDialog(null)
     if (dialog.selectedFile != null) {
-        fileSelected(dialog.selectedFile)
-    } else {
-        fileNotSelected()
+        uiModel.root.value = uiModel.viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
+    } else if (uiModel.root.value == null) {
+        uiModel.noSourceDirectoryChosenDialogVisible.value = true
     }
+    uiModel.fileChooseDialogVisible.value = false
 }
