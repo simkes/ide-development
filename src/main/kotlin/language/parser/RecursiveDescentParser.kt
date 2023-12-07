@@ -231,6 +231,8 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
 
     private fun factor(): Expr {
         val startToken = currentTokenIndex
+        if (currentTokenIndex == tokens.size)
+            throw IllegalArgumentException("Empty expression.")
         return when (val token = nextToken()) {
             is BoolToken -> Expr.BoolValue(token, startToken, startToken)
             is StringLiteralToken -> Expr.StringLiteral(token, startToken, startToken)
