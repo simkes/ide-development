@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -31,6 +32,7 @@ import kotlinx.coroutines.delay
 import java.awt.FileDialog
 import java.awt.Frame
 import ui.*
+import javax.swing.JFileChooser
 import kotlin.math.max
 import kotlin.math.min
 
@@ -83,10 +85,12 @@ class App {
 
         @Composable
         fun fileDialog() {
-            val dialog = FileDialog(null as Frame?, "Choose a File")
+            val dialog = JFileChooser()
+            dialog.fileSelectionMode = JFileChooser.FILES_ONLY
             dialog.isVisible = true
-            if (dialog.files.isNotEmpty()) {
-                viewModel.onFileOpening(dialog.file)
+            dialog.showOpenDialog(null)
+            if (dialog.selectedFile != null) {
+                viewModel.onFileOpening(dialog.selectedFile.path)
             }
             fileChooseDialogVisible.value = false
         }
@@ -115,8 +119,18 @@ class App {
                     .focusRequester(requester).fillMaxWidth().weight(1f)) {
                     text.let {
                         val textStyle = TextStyle(fontSize = 20.sp)
+                        val highlighters = viewModel.highlighters.map { highlighter ->
+                            AnnotatedString.Range(
+                                SpanStyle(
+                                    color = highlighterColorToComposeColor(highlighter.color),
+                                    textDecoration = if (highlighter.underlined) TextDecoration.Underline else TextDecoration.None
+                                ),
+                                highlighter.startOffset,
+                                highlighter.endOffset
+                            )
+                        }
                         val measuredText = textMeasurer.measure(
-                            AnnotatedString(it.value),
+                            AnnotatedString(it.value, spanStyles = highlighters),
                             style = textStyle
                         )
                         val lines = it.value.split("\n")
