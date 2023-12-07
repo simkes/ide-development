@@ -9,4 +9,5 @@ interface ICaretModel {
 
     fun moveCaret(direction: Direction, acrossLine: Boolean = true)
     fun newline()
+    fun updateLine()
 }

@@ -67,7 +67,7 @@ class DocumentImpl(initialText: String = "", override val fileURI: URI) : Docume
             }
         }
 
-        fun updateLine() {
+        override fun updateLine() {
             val (start, end) = getLineOffsets(_caretLine)
             _lineStartOffset = start; _lineEndOffset = end
         }

@@ -42,6 +42,7 @@ class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
         docToFile[document] = virtualFile
 
         currentDocument = document
+        currentDocument.caretModel.updateLine()
 
         return document
     }
