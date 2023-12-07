@@ -12,7 +12,7 @@ import javax.print.Doc
 
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
-    var text = mutableStateOf("")
+    val text = mutableStateOf("")
     val highlighters get() = _currentDocument.highlighters
 
 
@@ -20,7 +20,7 @@ object EditorViewModel {
     private val scope = GlobalScope
 
     private var _currentDocument: Document = DocumentImpl(fileURI = URI("")).also {
-        scope.launch(Dispatchers.IO) {
+        scope.launch(Dispatchers.Main) {
             it.observableText.collect {
                 text.value = it
             }

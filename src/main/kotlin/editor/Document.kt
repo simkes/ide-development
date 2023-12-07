@@ -10,7 +10,7 @@ import java.net.URI
  */
 interface Document {
     val observableText: StateFlow<String>
-    val highlighters: List<Highlighter>
+    val highlighters: Pair<List<Highlighter>, List<Highlighter>>
     val caretModel: ICaretModel
     val fileURI: URI
 

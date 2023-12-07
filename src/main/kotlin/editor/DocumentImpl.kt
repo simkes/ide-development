@@ -79,8 +79,8 @@ class DocumentImpl(initialText: String = "", override val fileURI: URI) : Docume
         }
     }
 
-    override val highlighters: List<Highlighter>
-        get() = HighlighterProvider.getHighlightersMerged(observableText.value, Level.SEMANTIC)
+    override val highlighters
+        get() = HighlighterProvider.getHighlighters(observableText.value, Level.SEMANTIC)
 
     override val caretModel = CaretModel()
     private var _text: TextBuffer = SimpleArrayTextBuffer(initialText)

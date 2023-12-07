@@ -13,25 +13,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import vfs.FileTreeNode
+import kotlin.io.path.absolute
 
 /**
  * Tree-like listing of files in a directory.
- * Draws files and directories as nodes in a scrollable lazy column and
- * performs [onFileClick] action when a file node is clicked.
+ * Draws files and directories as nodes in a scrollable lazy column.
  * Dir nodes expand/collapse upon click.
  *
  * It may be quite inefficient representation for more complex projects, but it works :)
  *
- * @param treeNode root node of a directory obtained through [VirtualFileSystem]
  * @param modifier Compose modifier to align the tree properly
- * @param onFileClick action performed when user clicks on a file node
  */
 @Composable
-fun FileTree(treeNode: FileTreeNode, modifier: Modifier, onFileClick: (FileTreeNode) -> Unit) {
-    val expandedNodes = remember { mutableStateListOf(treeNode) }
+fun FileTree(uiModel: UIModel, modifier: Modifier) {
+    val rootNode = uiModel.root.value!!
+    val expandedNodes = remember { mutableStateListOf(rootNode) }
     LazyColumn(modifier = modifier) {
         Node(
-            treeNode,
+            rootNode,
             1,
             isExpanded = {
                 expandedNodes.contains(it)
@@ -43,8 +42,9 @@ fun FileTree(treeNode: FileTreeNode, modifier: Modifier, onFileClick: (FileTreeN
                     expandedNodes.add(it)
                 }
             },
-            onFileClick
-        )
+        ) {
+            uiModel.emit { OpenFileInEditorEvent(it.path.absolute().toUri()) }
+        }
     }
 }
 

@@ -12,16 +12,15 @@ import editor.Document
 import kotlin.io.path.toPath
 
 @Composable
-fun EditorBar(openedDocuments: List<Document>, onClick: (Document) -> Unit, onClose: (Document) -> Unit, modifier: Modifier) {
+fun EditorBar(uiModel: UIModel, modifier: Modifier) {
     Row(modifier = modifier) {
-        println("Abobus: ${openedDocuments.size}")
-        openedDocuments.forEach {
+        uiModel.docs.value.forEach {
             Row(modifier = Modifier.clickable {
-                onClick(it)
+                uiModel.emit { OpenFileInEditorEvent(it.fileURI) }
             }) {
                 Text(it.fileURI.toPath().fileName.toString())
                 Icon(Icons.Default.Close, "", modifier = Modifier.clickable {
-                    onClose(it)
+                    uiModel.emit { CloseFileInEditorEvent(it.fileURI) }
                 })
             }
         }

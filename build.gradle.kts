@@ -20,6 +20,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
     implementation(compose.materialIconsExtended)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing")
 }
 
 tasks.withType<Test> {
