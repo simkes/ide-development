@@ -28,7 +28,8 @@ class DiskVirtualFile(val path: Path, private val vfs: VirtualFileSystem) :
     }
 
     override fun getBinaryContentFromSource(): ByteArray {
-        return vfs.runIORead { path.inputStream().readAllBytes() }
+        return if (isValid()) vfs.runIORead { path.inputStream().readAllBytes() }
+        else ByteArray(0)
     }
 
     override fun setBinaryContent(newContent: ByteArray) {
@@ -39,8 +40,15 @@ class DiskVirtualFile(val path: Path, private val vfs: VirtualFileSystem) :
 
     override fun setBinaryContentInSource(newContent: ByteArray) {
         setBinaryContent(newContent)
-        vfs.runIOWrite {
-            path.outputStream().write(content.value)
+        if (isValid()) {
+            vfs.runIOWrite {
+                path.outputStream().write(content.value)
+            }
+        } else {
+            vfs.runIOWrite {
+                Files.createFile(path)
+                path.outputStream().write(content.value)
+            }
         }
     }
 

@@ -7,11 +7,11 @@ import kotlinx.coroutines.launch
 import vfs.VirtualFile
 import java.net.URI
 
-class DocumentManagerImpl(private val scope: CoroutineScope) : DocumentManager {
+class DocumentManagerImpl(initialFile: VirtualFile, private val scope: CoroutineScope) : DocumentManager {
     private val fileToDoc: MutableMap<VirtualFile, Document> = emptyMap<VirtualFile, Document>().toMutableMap()
     private val docToFile: MutableMap<Document, VirtualFile> = emptyMap<Document, VirtualFile>().toMutableMap()
 
-    override var currentDocument: Document = DocumentImpl(fileURI = URI("untitled"))
+    override var currentDocument: Document = openDocument(initialFile)
         set(value) = run {
             field = value
             field.caretModel.updateLine()

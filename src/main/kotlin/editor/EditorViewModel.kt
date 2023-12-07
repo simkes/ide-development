@@ -18,16 +18,18 @@ object EditorViewModel {
 
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = GlobalScope
+    val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
 
-    private val documentManager: DocumentManager = DocumentManagerImpl(scope).also {
-        scope.launch(Dispatchers.Main) {
-            it.currentDocument.observableText.collect {
-                text.value = it
+
+    private val documentManager: DocumentManager =
+        DocumentManagerImpl(virtualFileSystem.getFile(URI("file", "", "/untitled", "")), scope).also {
+            scope.launch(Dispatchers.Main) {
+                it.currentDocument.observableText.collect {
+                    text.value = it
+                }
             }
         }
-    }
 
-    val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
     private val _currentDocument get() = documentManager.currentDocument
 
     var openedDocuments = mutableStateOf(documentManager.openedDocuments)
