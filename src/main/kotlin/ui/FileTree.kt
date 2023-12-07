@@ -1,5 +1,8 @@
 package ui
 
+import androidx.compose.foundation.ContextMenuArea
+import androidx.compose.foundation.ContextMenuDataProvider
+import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,17 +80,25 @@ private fun LazyListScope.Node(
         }
     }
     item {
-        Row {
-            // spacer adds left padding to visualise tree-like structure
-            Spacer(modifier = Modifier.width(8.dp * depth))
-            when (node.kind) {
-                FileTreeNode.TreeNodeKind.DIRECTORY -> Icon(Icons.Default.Folder, "")
-                FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Default.Description, "")
-            }
-            Text(
-                node.fileName.toString(),
-                modifier = modifier
+        ContextMenuArea(items = {
+            listOf(
+                ContextMenuItem("New") { TODO() },
+                ContextMenuItem("Copy") { TODO() },
+                ContextMenuItem("Move") { TODO() }
             )
+        }) {
+            Row {
+                // spacer adds left padding to visualise tree-like structure
+                Spacer(modifier = Modifier.width(8.dp * depth))
+                when (node.kind) {
+                    FileTreeNode.TreeNodeKind.DIRECTORY -> Icon(Icons.Default.Folder, "")
+                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Default.Description, "")
+                }
+                Text(
+                    node.fileName.toString(),
+                    modifier = modifier
+                )
+            }
         }
     }
     if (isExpanded(node)) {
