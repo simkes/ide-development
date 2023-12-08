@@ -128,10 +128,10 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
 
         val symbolName = symbolName()
 
-        return if (checkToken(AssignToken)) {
-            assignment(symbolName)
-        } else {
+        return if (checkToken(LeftParenToken)) {
             procCall(symbolName)
+        } else {
+            assignment(symbolName)
         }
     }
 
