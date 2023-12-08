@@ -8,23 +8,25 @@ import language.semantic.DefaultASTVisitor
 
 // combines stages of code analysis together
 object CodeAnalyzer {
-    fun analyze(code: String, level: Level): Pair<List<TokenWithOffset>, List<AnalysisError>> {
-        if(level == Level.NONE)
+    fun analyze(code: String, level: Level): Pair<List<TokenWithOffset>, List<Error>> {
+        if (level == Level.NONE)
             return Pair(emptyList(), emptyList())
 
         val lexer = Lexer(code)
-        val tokenWithOffset = lexer.tokenize()
-        if(level == Level.LEXICAL)
-            return Pair(tokenWithOffset, emptyList())
+        val (tokenWithOffset, errors) = lexer.tokenize()
+        if (level == Level.LEXICAL)
+            return Pair(tokenWithOffset, errors)
 
         val parser = RecursiveDescentParser(tokenWithOffset.map { tk -> tk.token })
         val (AST, analysisErrors) = parser.parse()
-        if(level == Level.SYNTAX)
-            return Pair(tokenWithOffset, analysisErrors)
+        errors.addAll(analysisErrors)
+
+        if (level == Level.SYNTAX)
+            return Pair(tokenWithOffset, errors)
 
         val visitor = DefaultASTVisitor()
         visitor.visit(AST, SpaghettiStack())
-        analysisErrors.addAll(visitor.getErrors())
-        return Pair(tokenWithOffset, analysisErrors)
+        errors.addAll(visitor.getErrors())
+        return Pair(tokenWithOffset, errors)
     }
 }

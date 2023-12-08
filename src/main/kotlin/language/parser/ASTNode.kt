@@ -1,6 +1,7 @@
 package language.parser
 
 import dataStructures.SpaghettiStack
+import language.Type
 import language.lexer.*
 import language.semantic.SymbolTable
 import language.semantic.Visitor
@@ -11,7 +12,7 @@ sealed class ASTNode(open val start: Int, open val end: Int) {
 
 sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(start, end) {
     data class VarDeclaration(
-        val identifier: IdentifierToken,
+        val symbol: Expr.SymbolName,
         val expr: Expr,
         override val start: Int = -1,
         override val end: Int = -1
@@ -22,7 +23,7 @@ sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(star
     }
 
     data class Assignment(
-        val identifier: IdentifierToken, val expr: Expr,
+        val symbol: Expr.SymbolName, val expr: Expr,
         override val start: Int = -1,
         override val end: Int = -1
     ) : Stmt(start, end) {
@@ -72,7 +73,7 @@ sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(star
     }
 
     data class FuncDeclaration(
-        val identifier: IdentifierToken, val parameters: List<Parameter>, val block: Block,
+        val symbol: Expr.SymbolName, val parameters: List<Parameter>, val block: Block,
         override val start: Int = -1,
         override val end: Int = -1
     ) : Stmt(start, end) {
@@ -92,7 +93,7 @@ sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(star
     }
 
     data class ProcDeclaration(
-        val identifier: IdentifierToken, val parameters: List<Parameter>, val block: Block,
+        val symbol: Expr.SymbolName, val parameters: List<Parameter>, val block: Block,
         override val start: Int = -1,
         override val end: Int = -1
     ) : Stmt(start, end) {
@@ -102,17 +103,7 @@ sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(star
     }
 
     data class ProcCall(
-        val identifier: IdentifierToken, val arguments: List<Expr>,
-        override val start: Int = -1,
-        override val end: Int = -1
-    ) : Stmt(start, end) {
-        override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {
-            return visitor.visit(this, symbolTables)
-        }
-    }
-
-    data class InvalidStatement(
-        val errorMessage: String,
+        val symbol: Expr.SymbolName, val arguments: List<Expr>,
         override val start: Int = -1,
         override val end: Int = -1
     ) : Stmt(start, end) {
@@ -123,7 +114,7 @@ sealed class Stmt(override val start: Int, override val end: Int) : ASTNode(star
 }
 
 data class Parameter(
-    val identifier: IdentifierToken, val type: TypeToken, override val start: Int = -1,
+    val symbol: Expr.SymbolName, val type: Type, override val start: Int = -1,
     override val end: Int = -1
 ) : ASTNode(start, end) {
     override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {
@@ -154,7 +145,7 @@ sealed class Expr(
     }
 
     data class FuncCall(
-        val identifier: IdentifierToken, val arguments: List<Expr>, override val start: Int = -1,
+        val symbol: SymbolName, val arguments: List<Expr>, override val start: Int = -1,
         override val end: Int = -1
     ) : Expr(start, end) {
         override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {
@@ -162,8 +153,8 @@ sealed class Expr(
         }
     }
 
-    data class Variable(
-        val name: IdentifierToken, override val start: Int = -1,
+    data class SymbolName(
+        val identifier: IdentifierToken, override val start: Int = -1,
         override val end: Int = -1
     ) : Expr(start, end) {
         override fun accept(visitor: Visitor, symbolTables: SpaghettiStack<SymbolTable>): Any {

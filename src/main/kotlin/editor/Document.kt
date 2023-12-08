@@ -1,8 +1,9 @@
 package editor
 
 import androidx.compose.runtime.MutableState
-import highlighting.Highlighter
+import highlighting.ColoredHighlighter
 import highlighting.HighlighterProvider
+import highlighting.UnderlinedHighlighter
 import language.Level
 
 /**
@@ -12,7 +13,7 @@ import language.Level
 interface Document {
     val observableText: MutableState<String> // TODO: mutable public field
     val text get() = observableText.value
-    val highlighters: Pair<List<Highlighter>, List<Highlighter>> get() = HighlighterProvider.getHighlighters(text, Level.SEMANTIC)
+    val highlighters: Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>> get() = HighlighterProvider.getHighlighters(text, Level.SEMANTIC)
 
     fun insertText(text: String, offset: Int) = text.forEachIndexed { index, c ->
         insertChar(c, offset + index)

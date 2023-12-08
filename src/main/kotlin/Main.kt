@@ -179,15 +179,30 @@ class App {
 
                             underlined.forEach { highlighter ->
                                 if (measuredText.size.width >= highlighter.endOffset) {
-                                    val y = measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.startOffset))
-                                    val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
-                                    val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
-                                    drawLine(
-                                        color = Color.Red,
-                                        start = Offset(x1, y),
-                                        end = Offset(x2, y),
-                                        strokeWidth = 1f
-                                    )
+                                    if (highlighter.underlinedAfterEndOffset) {
+                                        // drawing short red line after end offset
+                                        val y =
+                                            measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.endOffset))
+                                        val x = measuredText.getHorizontalPosition(highlighter.endOffset, true)
+                                        val lineLength = 20f
+                                        drawLine(
+                                            color = Color.Red,
+                                            start = Offset(x, y),
+                                            end = Offset(x + lineLength, y),
+                                            strokeWidth = 2f
+                                        )
+                                    } else {
+                                        val y =
+                                            measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.startOffset))
+                                        val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
+                                        val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
+                                        drawLine(
+                                            color = Color.Red,
+                                            start = Offset(x1, y),
+                                            end = Offset(x2, y),
+                                            strokeWidth = 2f
+                                        )
+                                    }
                                 }
                             }
                         }

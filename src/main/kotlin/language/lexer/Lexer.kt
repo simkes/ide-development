@@ -1,14 +1,17 @@
 package language.lexer
 
+import language.ErrorType
+import language.LexicalError
+
 data class TokenWithOffset(val token: Token, val startOffset: Int, val endOffset: Int)
 
 class Lexer(private val input: String) {
-    var tokenizedWithError = false
-        private set
+
+    private val errors = mutableListOf<language.Error>()
 
     private var currentIndex = 0
 
-    fun tokenize(): List<TokenWithOffset> {
+    fun tokenize(): Pair<List<TokenWithOffset>, MutableList<language.Error>> {
         val tokens = mutableListOf<TokenWithOffset>()
         skipWhitespace()
         while (currentIndex < input.length) {
@@ -20,14 +23,15 @@ class Lexer(private val input: String) {
                 isSpecialSymbol(char) -> tokens.add(recognizeSpecialSymbol())
                 else -> {
                     val startOffset = currentIndex
-                    tokenizedWithError = true
                     skipUntilTokenEnd()
-                    tokens.add(TokenWithOffset(UnrecognizedToken("Unexpected symbol."), startOffset, currentIndex))
+                    val unrecognizedTokenWithOffset = TokenWithOffset(UnrecognizedToken, startOffset, currentIndex)
+                    tokens.add(unrecognizedTokenWithOffset)
+                    errors.add(LexicalError(unrecognizedTokenWithOffset, ErrorType.UNEXPECTED_SYMBOL))
                 }
             }
             skipWhitespace()
         }
-        return tokens
+        return Pair(tokens, errors)
     }
 
     private fun peek(): Char = if (currentIndex < input.length) input[currentIndex] else 0.toChar()
@@ -73,18 +77,15 @@ class Lexer(private val input: String) {
         val sb = StringBuilder()
         val startOffset = currentIndex
         nextChar()
-        val token: Token
         while (currentIndex < input.length && peek() != QUOTE) {
             sb.append(nextChar())
         }
-        if (currentIndex < input.length && peek() == QUOTE) {
-            nextChar()
-            token = StringLiteralToken(sb.toString())
-        } else {
-            tokenizedWithError = true
-            token = UnrecognizedToken("Expected '$QUOTE'.")
+        val quoteChar = nextChar()
+        val token = TokenWithOffset(StringLiteralToken(sb.toString()), startOffset, currentIndex)
+        if (quoteChar != QUOTE) {
+            errors.add(LexicalError(token, ErrorType.EXPECTED_QUOTE))
         }
-        return TokenWithOffset(token, startOffset, currentIndex)
+        return token
     }
 
     private fun recognizeSpecialSymbol(): TokenWithOffset {
@@ -103,8 +104,9 @@ class Lexer(private val input: String) {
             token = specialSymbolToToken.getValue(char)
             return TokenWithOffset(token, startOffset, currentIndex)
         }
-        tokenizedWithError = true
         skipUntilTokenEnd()
-        return TokenWithOffset(UnrecognizedToken("Unexpected symbol."), startOffset, currentIndex)
+        val tokenWithOffset = TokenWithOffset(UnrecognizedToken, startOffset, currentIndex)
+        errors.add(LexicalError(tokenWithOffset, ErrorType.UNEXPECTED_SYMBOL))
+        return tokenWithOffset
     }
 }
