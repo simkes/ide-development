@@ -111,10 +111,11 @@ class DefaultASTVisitor : Visitor {
         val symbol = node.symbol
         val identifierName = symbol.identifier.name
 
+        var conflictingDeclaration = false
+
         if (symbolTables.lookUpInParentChain { st -> st.containsOverload(identifierName, parameterTypes) } != null) {
             semanticErrors.add(ConflictingDeclaration(symbol))
-            // TODO: may be analyze function body?
-            return Type.UNKNOWN
+            conflictingDeclaration = true
         }
 
         symbolTables.addNode(SymbolTable(Scope.FUNC_SCOPE))
@@ -139,7 +140,8 @@ class DefaultASTVisitor : Visitor {
 
         val parameters =
             node.parameters.zip(parameterTypes) { param, type -> TypedSymbol(param.symbol.identifier.name, type) }
-        symbolTables.currentValue()!!.defineOverload(FuncSymbol(identifierName, parameters, returnType))
+        if (!conflictingDeclaration)
+            symbolTables.currentValue()!!.defineOverload(FuncSymbol(identifierName, parameters, returnType))
         return Type.UNKNOWN
     }
 
@@ -154,10 +156,11 @@ class DefaultASTVisitor : Visitor {
         val symbol = node.symbol
         val identifierName = symbol.identifier.name
 
+        var conflictingDeclaration = false
+
         if (symbolTables.lookUpInParentChain { st -> st.containsOverload(identifierName, parameterTypes) } != null) {
             semanticErrors.add(ConflictingDeclaration(symbol))
-            // TODO: may be analyze function body?
-            return Type.UNKNOWN
+            conflictingDeclaration = true
         }
 
         symbolTables.addNode(SymbolTable(Scope.PROC_SCOPE))
@@ -176,7 +179,9 @@ class DefaultASTVisitor : Visitor {
 
         val parameters =
             node.parameters.zip(parameterTypes) { param, type -> TypedSymbol(param.symbol.identifier.name, type) }
-        symbolTables.currentValue()!!.defineOverload(ProcSymbol(identifierName, parameters))
+
+        if (!conflictingDeclaration)
+            symbolTables.currentValue()!!.defineOverload(ProcSymbol(identifierName, parameters))
         return Type.UNKNOWN
     }
 
