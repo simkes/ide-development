@@ -189,7 +189,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
         return Stmt.IfStatement(
             condition,
             block as Stmt.Block,
-            elseBlock as Stmt.Block, // TODO: check null casts to Block
+            if (elseBlock == null) null else elseBlock as Stmt.Block,
             startToken,
             currentTokenIndex - 1
         )
