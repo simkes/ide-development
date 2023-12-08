@@ -6,6 +6,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import editor.*
+import highlighting.Highlighter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -100,6 +102,8 @@ class App {
         val horizontalScrollState = rememberScrollState(0)
         val verticalScrollState = rememberScrollState(0)
 
+        val errors = mutableStateListOf<String>()
+
         LaunchedEffect(Unit) {
             while (true) {
                 caretVisible.value = !caretVisible.value
@@ -130,10 +134,27 @@ class App {
                             AnnotatedString(it.value, spanStyles = highlighters),
                             style = textStyle
                         )
+                        val charWidth = measuredText.size.width / max(1, it.value.length)
+                        errors.clear()
+                        val addErrorMsg = { highlighter: Highlighter ->
+                            if (measuredText.size.width >= highlighter.endOffset) {
+                                highlighter.errorMessage?.let { msg ->
+                                    errors.add(
+                                        "Line ${measuredText.getLineForOffset(highlighter.startOffset)}, pos ${
+                                            (measuredText.getHorizontalPosition(
+                                                highlighter.startOffset,
+                                                true
+                                            ) / charWidth / 3).toInt()
+                                        }: $msg"
+                                    )
+                                }
+                            }
+                        }
+                        colored.forEach { h -> addErrorMsg(h) }
+                        underlined.forEach { h -> addErrorMsg(h) }
                         val lines = it.value.split("\n")
                         val (caretLine, caretPos) = viewModel.getCaret()
                         val charHeight = measuredText.size.height / max(1, lines.size)
-                        val charWidth = measuredText.size.width / max(1, it.value.length)
                         val caretY = charHeight * caretLine.toFloat()
                         var caretX = 0f
                         if (lines.getOrNull(caretLine) != null) {
@@ -212,6 +233,11 @@ class App {
                     fileChooseDialogVisible.value = true
                 }) {
                     Text("Choose a File")
+                }
+                LazyColumn {
+                    items(errors.size) {
+                        Text(errors[it])
+                    }
                 }
             }
         }

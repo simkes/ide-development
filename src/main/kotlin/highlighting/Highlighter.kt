@@ -11,19 +11,20 @@ enum class Color {
 
 sealed class Highlighter(
     open val startOffset: Int,
-    open val endOffset: Int
+    open val endOffset: Int,
+    open val errorMessage: String? = null
 )
 
 data class ColoredHighlighter(
     override val startOffset: Int,
     override val endOffset: Int,
     val color: Color = Color.BLACK,
-    val errorMessage: String? = null
+    override val errorMessage: String? = null
 ) : Highlighter(startOffset, endOffset)
 
 data class UnderlinedHighlighter(
     override val startOffset: Int,
     override val endOffset: Int,
     val underlinedAfterEndOffset: Boolean,
-    val errorMessage: String
+    override val errorMessage: String? = null
 ) : Highlighter(startOffset, endOffset)
