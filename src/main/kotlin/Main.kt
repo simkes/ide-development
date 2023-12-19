@@ -38,11 +38,11 @@ class App {
                     Column(modifier = Modifier.weight(2f)) {
                         EditorBar(
                             uiModel,
-                            Modifier.weight(1f)
+                            Modifier
                         )
                         EditorCanvas(
                             uiModel,
-                            Modifier.weight(9f)
+                            Modifier
                         )
                     }
                 }
