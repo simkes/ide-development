@@ -1,19 +1,15 @@
 package editor
 
 import Direction
-import OPENED_DOCUMENTS_LIMIT
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
 import highlighting.ColoredHighlighter
 import highlighting.HighlighterProvider
 import highlighting.UnderlinedHighlighter
-import kotlinx.coroutines.flow.*
 import language.Level
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
 import java.net.URI
-import javax.print.Doc
 
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
@@ -25,7 +21,7 @@ object EditorViewModel {
     val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
 
     private val documentManager: DocumentManager =
-        DocumentManagerImpl(virtualFileSystem.getFile(URI("file", "", "/untitled", null)), scope).also {
+        DocumentManager(virtualFileSystem.getFile(URI("file", "", "/untitled", null)), scope).also {
             scope.launch(Dispatchers.Main) {
                 it.currentDocument.observableText.collect {
                     text.value = it
