@@ -1,7 +1,6 @@
 package editor
 
 import Direction
-import highlighting.Highlighter
 import highlighting.HighlighterProvider
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*

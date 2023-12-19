@@ -12,10 +12,5 @@ import androidx.compose.ui.unit.dp
 fun FileExplorer(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
     Column(modifier = modifier.width(200.dp)) {
         FileTree(uiModel, modifier = modifier.weight(9f))
-        Button(modifier = modifier.weight(1f), onClick = {
-            fileChooseDialogVisible.value = true
-        }) {
-            Text("Choose directory")
-        }
     }
 }
