@@ -45,14 +45,15 @@ fun NoSourceDirectoryChosenDialog(uiModel: UiModel) = with(uiModel) {
 
 @Composable
 fun FileChooserDialog(uiModel: UiModel) = with(uiModel) {
-    val dialog = JFileChooser()
-    dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-    dialog.isVisible = true
-    dialog.showOpenDialog(null)
-    if (dialog.selectedFile != null) {
-        root.value = viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
-    } else if (root.value == null) {
-        noSourceDirectoryChosenDialogVisible.value = true
+    if (fileChooseDialogVisible.value) {
+        val dialog = JFileChooser()
+        dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+        dialog.showOpenDialog(null)
+        if (dialog.selectedFile != null) {
+            root.value = viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
+        } else if (root.value == null) {
+            noSourceDirectoryChosenDialogVisible.value = true
+        }
+        fileChooseDialogVisible.value = false
     }
-    fileChooseDialogVisible.value = false
 }

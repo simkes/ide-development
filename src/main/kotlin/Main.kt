@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -23,9 +24,7 @@ class App {
         }
 
         MaterialTheme {
-            if (uiModel.fileChooseDialogVisible.value) {
-                FileChooserDialog(uiModel)
-            }
+            FileChooserDialog(uiModel)
 
             if (uiModel.noSourceDirectoryChosenDialogVisible.value) {
                 NoSourceDirectoryChosenDialog(uiModel)
