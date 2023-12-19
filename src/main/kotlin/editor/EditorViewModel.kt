@@ -6,9 +6,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
 import highlighting.ColoredHighlighter
+import highlighting.HighlighterProvider
 import highlighting.UnderlinedHighlighter
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
+import language.Level
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
 import java.net.URI
@@ -17,21 +18,21 @@ import javax.print.Doc
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
     val text = mutableStateOf("")
+    val highlighters = mutableStateOf<Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>>>(Pair(listOf(), listOf()))
 
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = GlobalScope
     val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
-
 
     private val documentManager: DocumentManager =
         DocumentManagerImpl(virtualFileSystem.getFile(URI("file", "", "/untitled", null)), scope).also {
             scope.launch(Dispatchers.Main) {
                 it.currentDocument.observableText.collect {
                     text.value = it
+                    highlighters.value = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
                 }
             }
         }
-    val highlighters: Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>> get() = _currentDocument.highlighters
 
     private val _currentDocument get() = documentManager.currentDocument
 
@@ -49,6 +50,7 @@ object EditorViewModel {
         scope.launch(Dispatchers.IO) {
             _currentDocument.observableText.collect {
                 text.value = it
+                highlighters.value = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
             }
         }
     }
@@ -60,6 +62,7 @@ object EditorViewModel {
         scope.launch(Dispatchers.IO) {
             _currentDocument.observableText.collect {
                 text.value = it
+                highlighters.value = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
             }
         }
     }
