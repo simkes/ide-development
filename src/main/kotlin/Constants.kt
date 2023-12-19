@@ -1,6 +1,10 @@
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.unit.dp
 import highlighting.Highlighter
 
 enum class Direction {
@@ -27,6 +31,10 @@ val highlighterColorToComposeColor = { color: highlighting.Color ->
         highlighting.Color.BLUE -> Color(0xFF5f9182)
         highlighting.Color.BLACK -> Color(0xFF878573)
     }
+}
+
+val verticalDividerModifier: Modifier.() -> Modifier = {
+    this.fillMaxHeight().width(1.dp)
 }
 
 val ASCII_RANGE = 9 .. 128

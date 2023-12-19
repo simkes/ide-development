@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun FileExplorer(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
-    Column(modifier = modifier.width(200.dp)) {
-        FileTree(uiModel, modifier = modifier.weight(9f))
+fun FileExplorer(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel) {
+    Column(modifier = modifier) {
+        FileTree(uiModel, modifier = modifier)
     }
 }

@@ -1,7 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -38,9 +36,10 @@ class App {
                 Column {
                     TopBar(uiModel, Modifier)
                     Divider()
-                    Row {
-                        FileExplorer(uiModel, Modifier.padding(4.dp))
-                        Column(modifier = Modifier.weight(2f)) {
+                    Row(modifier = Modifier.weight(3f)) {
+                        FileExplorer(uiModel, Modifier.width(150.dp))
+                        Divider(modifier = Modifier.verticalDividerModifier())
+                        Column(modifier = Modifier) {
                             EditorBar(
                                 uiModel,
                                 Modifier
@@ -51,6 +50,8 @@ class App {
                             )
                         }
                     }
+                    Divider()
+                    BottomPanel(uiModel, modifier = Modifier.weight(1f))
                 }
             } else if (!uiModel.fileChooseDialogVisible.value && !uiModel.noSourceDirectoryChosenDialogVisible.value) {
                 assert(false)
