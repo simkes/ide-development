@@ -3,6 +3,11 @@ package editor
 import highlighting.Highlighter
 import kotlinx.coroutines.flow.StateFlow
 import java.net.URI
+import androidx.compose.runtime.MutableState
+import highlighting.ColoredHighlighter
+import highlighting.HighlighterProvider
+import highlighting.UnderlinedHighlighter
+import language.Level
 
 /**
  * Represents the contents of the (virtual) file opened in an editor
@@ -10,7 +15,7 @@ import java.net.URI
  */
 interface Document {
     val observableText: StateFlow<String>
-    val highlighters: Pair<List<Highlighter>, List<Highlighter>>
+    val highlighters: Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>> get() = HighlighterProvider.getHighlighters(observableText.value, Level.SEMANTIC)
     val caretModel: ICaretModel
     val fileURI: URI
 

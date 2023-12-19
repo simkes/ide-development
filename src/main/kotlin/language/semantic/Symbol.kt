@@ -1,21 +1,6 @@
 package language.semantic
 
-import language.lexer.BoolTypeToken
-import language.lexer.NumberTypeToken
-import language.lexer.StringTypeToken
-
-enum class Type {
-    NUMBER,
-    STRING,
-    BOOL,
-    UNKNOWN
-}
-
-val tokenToType = mapOf(
-    NumberTypeToken to Type.NUMBER,
-    StringTypeToken to Type.STRING,
-    BoolTypeToken to Type.BOOL
-)
+import language.Type
 
 sealed class Symbol(val name: String)
 class TypedSymbol(name: String, val type: Type) : Symbol(name)

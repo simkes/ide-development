@@ -5,6 +5,10 @@ import OPENED_DOCUMENTS_LIMIT
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.*
+import highlighting.ColoredHighlighter
+import highlighting.UnderlinedHighlighter
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import vfs.VirtualFileSystem
 import vfs.VirtualFileSystemImpl
 import java.net.URI
@@ -13,8 +17,6 @@ import javax.print.Doc
 object EditorViewModel {
     // TODO: context object to receive control objects (Project?)
     val text = mutableStateOf("")
-    val highlighters get() = _currentDocument.highlighters
-
 
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = GlobalScope
@@ -29,6 +31,7 @@ object EditorViewModel {
                 }
             }
         }
+    val highlighters: Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>> get() = _currentDocument.highlighters
 
     private val _currentDocument get() = documentManager.currentDocument
 

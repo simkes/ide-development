@@ -92,7 +92,7 @@ object ProcKeywordToken : KeywordToken()
 object ReturnKeywordToken : KeywordToken()
 object PrintKeywordToken : KeywordToken()
 
-sealed class TypeToken : Token()
+open class TypeToken : Token()
 object NumberTypeToken : TypeToken()
 object StringTypeToken : TypeToken()
 object BoolTypeToken : TypeToken()
@@ -111,4 +111,4 @@ val keywordToToken = mapOf(
     "bool" to BoolTypeToken
 )
 
-data class UnrecognizedToken(val errorMessage: String) : Token()
+object UnrecognizedToken : Token()

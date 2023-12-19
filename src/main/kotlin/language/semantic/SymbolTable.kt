@@ -1,35 +1,48 @@
 package language.semantic
 
-class SymbolTable {
+import language.Type
 
-    private val symbols = mutableMapOf<String, Symbol>()
+enum class Scope {
+    GLOBAL_SCOPE,
+    FUNC_SCOPE,
+    PROC_SCOPE,
+    BLOCK_SCOPE
+}
 
-    // overloads handling
-    companion object {
-        fun generateCallableSignature(name: String, parameterTypes: List<Type>): String {
-            return name + "(" + parameterTypes.joinToString(",") { it.toString() } + ")"
-        }
-    }
+class SymbolTable(val scope: Scope) {
 
-    fun define(symbol: Symbol) {
-        var key = symbol.name
+    private val variables = mutableMapOf<String, TypedSymbol>()
+    private val functions = mutableMapOf<String, MutableList<CallableSymbol>>()
 
-        if (symbol is CallableSymbol) {
-            key = generateCallableSignature(symbol.name, symbol.parameters.map { it.type })
-        }
-        if (symbols.containsKey(key))
+    fun defineVariable(variable: TypedSymbol) {
+        val key = variable.name
+        if (variables.containsKey(key))
             throw IllegalArgumentException("Redefinition of symbol $key is not allowed.")
-
-        symbols[key] = symbol
+        variables[key] = variable
     }
 
-    fun resolve(name: String, parameterTypes: List<Type>? = null): Symbol? {
-        return if (parameterTypes != null) {
-            symbols[generateCallableSignature(name, parameterTypes)]
+    fun defineOverload(function: CallableSymbol) {
+        if (!functions.containsKey(function.name)) {
+            functions[function.name] = mutableListOf()
         } else {
-            symbols[name]
+            if (containsOverload(function.name, function.parameters.map { typedSymbol -> typedSymbol.type }))
+                throw IllegalArgumentException("Redefinition of symbol ${function.name} is not allowed.")
         }
+        functions[function.name]!!.add(function)
     }
 
-    fun contains(name: String, parameterTypes: List<Type>? = null): Boolean = resolve(name, parameterTypes) != null
+    fun resolveVariable(name: String): TypedSymbol? = variables[name]
+    fun resolveOverload(name: String, parameterTypes: List<Type>): CallableSymbol? {
+        if (!containsFunction(name)) return null
+        for (overload in functions[name]!!) {
+            val typesList = overload.parameters.map { typedSymbol -> typedSymbol.type }
+            if (typesList == parameterTypes)
+                return overload
+        }
+        return null
+    }
+
+    fun containsVariable(name: String): Boolean = resolveVariable(name) != null
+    fun containsOverload(name: String, parameterTypes: List<Type>): Boolean = resolveOverload(name,parameterTypes) != null
+    fun containsFunction(name: String): Boolean = functions.containsKey(name)
 }

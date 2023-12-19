@@ -18,7 +18,7 @@ val arrowEventToDirection = mapOf(
     Key.DirectionRight to Direction.RIGHT
 )
 
-val highlighterColorToComposeColor: (highlighting.Color) -> Color = { color: highlighting.Color ->
+val highlighterColorToComposeColor = { color: highlighting.Color ->
     when (color) {
         highlighting.Color.RED -> Color(0xFFBF2308)
         highlighting.Color.ORANGE -> Color(0xFFae7313)

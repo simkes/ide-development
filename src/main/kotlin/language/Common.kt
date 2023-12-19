@@ -1,6 +1,8 @@
 package language
 
-import language.parser.ASTNode
+import language.lexer.BoolTypeToken
+import language.lexer.NumberTypeToken
+import language.lexer.StringTypeToken
 
 // each level of analysis also includes all previous
 enum class Level {
@@ -9,4 +11,16 @@ enum class Level {
     SYNTAX,
     SEMANTIC
 }
-data class AnalysisError(val node: ASTNode, val errorMessage: String)
+
+enum class Type {
+    NUMBER,
+    STRING,
+    BOOL,
+    UNKNOWN
+}
+
+val tokenToType = mapOf(
+    NumberTypeToken to Type.NUMBER,
+    StringTypeToken to Type.STRING,
+    BoolTypeToken to Type.BOOL
+)
