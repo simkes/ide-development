@@ -1,11 +1,25 @@
 package vfs
 
-import java.nio.file.Path
+import kotlinx.coroutines.flow.*
+import java.net.URI
 
-interface VirtualFile {
-    val path: Path
+sealed interface VirtualFile {
+    val contentsFlow: StateFlow<ByteArray>
+    val uri: URI
+
+    fun isDirectory(): Boolean
+    fun isValid(): Boolean
 
     fun getName(): String
     fun getBinaryContent(): ByteArray
+    fun getBinaryContentFromSource(): ByteArray
     fun setBinaryContent(newContent: ByteArray)
+    fun setBinaryContentInSource(newContent: ByteArray)
+    fun createChildFile(childName: String): VirtualFile
+    fun createChildDir(childName: String): VirtualFile
+    fun move(newParent: VirtualFile)
+    fun copy(newParent: VirtualFile, copyName: String)
+    fun delete()
+    fun rename(newName: String)
+    suspend fun subscribe(flow: StateFlow<String>)
 }

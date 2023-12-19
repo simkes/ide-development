@@ -1,6 +1,7 @@
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import highlighting.Highlighter
 
 enum class Direction {
     UP,
@@ -29,3 +30,5 @@ val highlighterColorToComposeColor = { color: highlighting.Color ->
 }
 
 val ASCII_RANGE = 9 .. 128
+const val OPENED_DOCUMENTS_LIMIT = 2
+const val SPACES_IN_TAB = 2
