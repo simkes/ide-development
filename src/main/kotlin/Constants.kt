@@ -31,3 +31,4 @@ val highlighterColorToComposeColor = { color: highlighting.Color ->
 
 val ASCII_RANGE = 9 .. 128
 const val OPENED_DOCUMENTS_LIMIT = 2
+const val SPACES_IN_TAB = 2

@@ -38,8 +38,14 @@ class UiModel(val applicationScope: ApplicationScope, val coroutineScope: Corout
     fun handleKeyEvent(keyEvent: KeyEvent): Boolean {
         if (keyEvent.type == KeyEventType.KeyDown) { // otherwise event is registered two times: up and down
             println("Key pressed: ${keyEvent.key}")
+
             if (keyEvent.isCtrlPressed && keyEvent.key == Key.S) {
                 emit { FileSaveRequestEvent() } // TODO: multiple files
+                return true
+            }
+
+            if (keyEvent.key == Key.Tab) {
+                emit { TextInsertionEvent("  ") }
                 return true
             }
 
