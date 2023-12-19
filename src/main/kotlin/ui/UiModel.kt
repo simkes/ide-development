@@ -60,6 +60,7 @@ class UiModel(val applicationScope: ApplicationScope, val coroutineScope: Corout
 
                 Key.Enter -> {
                     emit { NewlineKeyEvent() }
+                    return true
                 }
             }
 

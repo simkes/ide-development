@@ -83,6 +83,7 @@ object EditorViewModel {
     }
 
     fun onNewline() {
+        onCharInsertion('\n')
         _currentDocument.caretModel.newline()
     }
 

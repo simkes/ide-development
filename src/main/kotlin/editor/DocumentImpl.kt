@@ -98,10 +98,10 @@ class DocumentImpl(initialText: String = "", override val fileURI: URI) : Docume
 
     override fun removeChar() {
         if (caretModel.absoluteOffset != 0) {
-            modifying {
-                _text.delete(caretModel.absoluteOffset - 1)
-            }
             caretModel.moveCaret(Direction.LEFT)
+            modifying {
+                _text.delete(caretModel.absoluteOffset)
+            }
         }
     }
 
