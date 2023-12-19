@@ -12,7 +12,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
@@ -32,7 +32,7 @@ fun EditorCanvas(
     val horizontalScrollState = rememberScrollState(0)
     val verticalScrollState = rememberScrollState(0)
 
-    Box(modifier = modifier.onKeyEvent { handleKeyEvent(it) }) {
+    Box(modifier = modifier.onPreviewKeyEvent { handleKeyEvent(it) }) {
         Canvas(modifier = modifier.focusable(true)
             .clickable { requester.requestFocus() }
             .focusRequester(requester)
@@ -79,7 +79,7 @@ fun EditorCanvas(
                     60f - verticalScrollState.value
                 ) {
                     // drawing line numbers
-                    for ((index, line) in lines.withIndex()) {
+                    for ((index, _) in lines.withIndex()) {
                         val lineNumberString = AnnotatedString((index + 1).toString())
                         val lineNumberLayout = textMeasurer.measure(
                             lineNumberString,
