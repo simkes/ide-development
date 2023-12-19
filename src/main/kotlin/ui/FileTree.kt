@@ -1,7 +1,6 @@
 package ui
 
 import androidx.compose.foundation.ContextMenuArea
-import androidx.compose.foundation.ContextMenuDataProvider
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,7 +27,7 @@ import kotlin.io.path.absolute
  * @param modifier Compose modifier to align the tree properly
  */
 @Composable
-fun FileTree(uiModel: UIModel, modifier: Modifier) = with(uiModel) {
+fun FileTree(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
     val rootNode = root.value!!
     val expandedNodes = remember { mutableStateListOf(rootNode) }
     LazyColumn(modifier = modifier) {

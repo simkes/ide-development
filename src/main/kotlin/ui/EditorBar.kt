@@ -8,11 +8,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import editor.Document
 import kotlin.io.path.toPath
 
 @Composable
-fun EditorBar(uiModel: UIModel, modifier: Modifier) = with(uiModel) {
+fun EditorBar(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
     Row(modifier = modifier) {
         docs.value.forEach {
             Row(modifier = Modifier.clickable {

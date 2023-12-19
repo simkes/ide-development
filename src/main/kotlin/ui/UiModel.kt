@@ -12,7 +12,7 @@ import arrowEventToDirection
 import editor.EditorViewModel
 import kotlinx.coroutines.CoroutineScope
 import vfs.FileTreeNode
-class UIModel(val applicationScope: ApplicationScope, val coroutineScope: CoroutineScope) {
+class UiModel(val applicationScope: ApplicationScope, val coroutineScope: CoroutineScope) {
     val viewModel = EditorViewModel
     val eventProcessor = UiEventProcessor(coroutineScope)
 

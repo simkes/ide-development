@@ -23,7 +23,7 @@ import kotlin.math.min
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun EditorCanvas(
-    uiModel: UIModel,
+    uiModel: UiModel,
     modifier: Modifier
 ) = with(uiModel) {
     val textMeasurer = rememberTextMeasurer()

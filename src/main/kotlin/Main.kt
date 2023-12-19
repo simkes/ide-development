@@ -14,7 +14,7 @@ import ui.*
 class App {
     @Composable
     @Preview
-    fun run(uiModel: UIModel) {
+    fun run(uiModel: UiModel) {
         LaunchedEffect(Unit) {
             while (true) {
                 uiModel.caretVisible.value = !uiModel.caretVisible.value
@@ -59,7 +59,7 @@ fun main() {
         Window(onCloseRequest = {
             exitApplication()
         }) {
-            app.run(UIModel(this@application, GlobalScope))
+            app.run(UiModel(this@application, GlobalScope))
         }
     }
 }

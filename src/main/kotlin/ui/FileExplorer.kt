@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun FileExplorer(uiModel: UIModel, modifier: Modifier) = with(uiModel) {
+fun FileExplorer(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
     Column(modifier = modifier.width(200.dp)) {
         FileTree(uiModel, modifier = modifier.weight(9f))
         Button(modifier = modifier.weight(1f), onClick = {

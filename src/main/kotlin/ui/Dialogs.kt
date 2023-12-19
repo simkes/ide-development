@@ -10,7 +10,7 @@ import javax.swing.JFileChooser
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun NoSourceDirectoryChosenDialog(uiModel: UIModel) = with(uiModel) {
+fun NoSourceDirectoryChosenDialog(uiModel: UiModel) = with(uiModel) {
     AlertDialog(
         onDismissRequest = {
             applicationScope.exitApplication()
@@ -44,7 +44,7 @@ fun NoSourceDirectoryChosenDialog(uiModel: UIModel) = with(uiModel) {
 }
 
 @Composable
-fun FileChooserDialog(uiModel: UIModel) = with(uiModel) {
+fun FileChooserDialog(uiModel: UiModel) = with(uiModel) {
     val dialog = JFileChooser()
     dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
     dialog.isVisible = true
