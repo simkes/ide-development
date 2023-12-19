@@ -24,7 +24,7 @@ object EditorViewModel {
 
 
     private val documentManager: DocumentManager =
-        DocumentManagerImpl(virtualFileSystem.getFile(URI("file", "", "/untitled", "")), scope).also {
+        DocumentManagerImpl(virtualFileSystem.getFile(URI("file", "", "/untitled", null)), scope).also {
             scope.launch(Dispatchers.Main) {
                 it.currentDocument.observableText.collect {
                     text.value = it

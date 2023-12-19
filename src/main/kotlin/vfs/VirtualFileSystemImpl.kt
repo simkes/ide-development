@@ -5,8 +5,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import util.watchService.MyWatchEvent
 import util.watchService.MyWatchService
+import java.io.File
 import java.net.URI
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.inputStream
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
@@ -26,7 +28,7 @@ class VirtualFileSystemImpl(scope: CoroutineScope) : VirtualFileSystem {
 
     override fun getFile(file: URI): VirtualFile {
         return when (file.scheme) {
-            "file" -> getFileByPath(Path.of(file.path))
+            "file" -> getFileByPath(File(file).toPath())
             else -> {
                 throw UnsupportedResourceSchemaException(file.scheme)
             }
