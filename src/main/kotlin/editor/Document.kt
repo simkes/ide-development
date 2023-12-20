@@ -1,6 +1,7 @@
 package editor
 
 import Direction
+import dataStructures.GapBuffer
 import highlighting.HighlighterProvider
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -82,7 +83,7 @@ class Document(initialText: String = "", val fileURI: URI) {
         get() = HighlighterProvider.getHighlighters(observableText.value, Level.SEMANTIC)
 
     val caretModel = CaretModel()
-    private var _text: TextBuffer = SimpleArrayTextBuffer(initialText)
+    private var _text: TextBuffer = GapBuffer(initialText)
 
     private val mutableText = MutableStateFlow(_text.getText())
     val observableText: StateFlow<String> = mutableText.asStateFlow()
@@ -117,7 +118,7 @@ class Document(initialText: String = "", val fileURI: URI) {
     suspend fun subscribe(flow: StateFlow<ByteArray>) {
         flow.debounce(1000).collect { ba ->
             mutableText.update { ba.decodeToString() }
-            _text = SimpleArrayTextBuffer(ba.decodeToString())
+            _text = GapBuffer(ba.decodeToString())
             println("Updated contents of the document")
         }
     }
