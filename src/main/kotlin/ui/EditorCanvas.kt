@@ -100,7 +100,7 @@ fun EditorCanvas(
 
                             if (caretVisible.value) {
                                 drawLine(
-                                    color = Color.Black,
+                                    color = Color.White,
                                     start = Offset(caretX, caretY),
                                     end = Offset(caretX, caretY + charHeight),
                                     strokeWidth = 1f

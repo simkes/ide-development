@@ -96,8 +96,8 @@ private fun LazyListScope.Node(
                 // spacer adds left padding to visualise tree-like structure
                 Spacer(modifier = Modifier.width(8.dp * depth))
                 when (node.kind) {
-                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Outlined.Description, "")
-                    else -> Icon(Icons.Outlined.Folder, "")
+                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Outlined.Description, "", tint = ViewConfig.defaultTextColor, modifier = Modifier.height(15.dp).width(15.dp))
+                    else -> Icon(Icons.Outlined.Folder, "", tint = ViewConfig.defaultTextColor, modifier = Modifier.height(15.dp).width(15.dp))
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
