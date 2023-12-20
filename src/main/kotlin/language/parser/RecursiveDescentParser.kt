@@ -362,6 +362,7 @@ class RecursiveDescentParser(private val tokens: List<Token>) {
             }
 
             else -> {
+                currentTokenIndex--
                 expectedExpressionError(startToken)
                 return null
             }
