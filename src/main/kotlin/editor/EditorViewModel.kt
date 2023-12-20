@@ -7,28 +7,14 @@ import highlighting.ColoredHighlighter
 import highlighting.HighlighterProvider
 import highlighting.UnderlinedHighlighter
 import language.Level
-import vfs.VirtualFileSystem
-import vfs.VirtualFileSystemImpl
 import java.net.URI
 
-object EditorViewModel {
-    // TODO: context object to receive control objects (Project?)
+class EditorViewModel(private val scope: CoroutineScope) {
     val text = mutableStateOf("")
     var highlighters: Pair<List<ColoredHighlighter>, List<UnderlinedHighlighter>> = (Pair(listOf(), listOf()))
+    private val virtualFileSystem get() = App.vfs
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope = GlobalScope
-    val virtualFileSystem: VirtualFileSystem = VirtualFileSystemImpl(scope)
-
-    private val documentManager: DocumentManager =
-        DocumentManager(virtualFileSystem.getFile(URI("file", "", "/untitled", null)), scope).also {
-            scope.launch(Dispatchers.Main) {
-                it.currentDocument.observableText.collect {
-                    highlighters = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
-                    text.value = it
-                }
-            }
-        }
+    private val documentManager: DocumentManager = DocumentManager(scope)
 
     private val _currentDocument get() = documentManager.currentDocument
 
@@ -55,10 +41,12 @@ object EditorViewModel {
         val virtualFile = virtualFileSystem.getFile(filePath)
         documentManager.closeDocument(virtualFile)
         openedDocuments.value = documentManager.openedDocuments
-        scope.launch(Dispatchers.Default) {
-            _currentDocument.observableText.collect {
-                highlighters = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
-                text.value = it
+        if (_currentDocument != null) {
+            scope.launch(Dispatchers.Default) {
+                _currentDocument.observableText.collect {
+                    highlighters = HighlighterProvider.getHighlighters(it, Level.SEMANTIC)
+                    text.value = it
+                }
             }
         }
     }
@@ -97,8 +85,4 @@ object EditorViewModel {
     fun getLineStart(line: Int) = _currentDocument.getLineStartOffset(line)
     fun getLineNumber(offset: Int) = _currentDocument.getLineNumber(offset)
 
-    // TODO: test only
-    fun purge() {
-        text.value = ""
-    }
 }

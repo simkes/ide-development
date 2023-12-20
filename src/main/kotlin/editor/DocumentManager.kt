@@ -6,21 +6,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import vfs.VirtualFile
 
-class DocumentManager(initialFile: VirtualFile, private val scope: CoroutineScope) {
-    private val fileToDoc: MutableMap<VirtualFile, Document> = emptyMap<VirtualFile, Document>().toMutableMap()
-    private val docToFile: MutableMap<Document, VirtualFile> = emptyMap<Document, VirtualFile>().toMutableMap()
+class DocumentManager(private val scope: CoroutineScope) {
+    private val fileToDoc: MutableMap<VirtualFile, IDocument> = emptyMap<VirtualFile, IDocument>().toMutableMap()
+    private val docToFile: MutableMap<IDocument, VirtualFile> = emptyMap<IDocument, VirtualFile>().toMutableMap()
 
-    var currentDocument: Document = openDocument(initialFile)
-        set(value) = run {
-            field = value
-            field.caretModel.updateLine()
-        }
+    var currentDocument: IDocument = DummyDocument
 
     val openedDocuments get() = fileToDoc.values.toList()
 
-    fun openDocument(virtualFile: VirtualFile): Document {
+    fun openDocument(virtualFile: VirtualFile): IDocument {
         if (fileToDoc.keys.contains(virtualFile)) {
             currentDocument = fileToDoc[virtualFile]!!
+            currentDocument.caretModel.updateLine()
             return fileToDoc[virtualFile]!!
         }
 
@@ -41,21 +38,27 @@ class DocumentManager(initialFile: VirtualFile, private val scope: CoroutineScop
         docToFile[document] = virtualFile
 
         currentDocument = document
+        currentDocument.caretModel.updateLine()
 
         return document
     }
 
-    fun saveDocument(document: Document) {
+    fun saveDocument(document: IDocument) {
         val virtualFile = docToFile[document] ?: (TODO("File relation is missing?"))
         virtualFile.setBinaryContent(document.observableText.value.toByteArray())
     }
 
-    private fun closeDocument(document: Document) {
+    private fun closeDocument(document: IDocument) {
         val correspondingVFile = docToFile[document]!!
         fileToDoc.remove(correspondingVFile)
         docToFile.remove(document)
         if (document == currentDocument) {
-            currentDocument = fileToDoc.values.last()
+            if (fileToDoc.isNotEmpty()) {
+                currentDocument = fileToDoc.values.last()
+                currentDocument.caretModel.updateLine()
+            } else {
+                currentDocument = DummyDocument
+            }
         }
         // TODO: serialize to some meta file
     }

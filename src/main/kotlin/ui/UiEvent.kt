@@ -1,5 +1,6 @@
 package ui
 
+import App
 import Direction
 import androidx.compose.ui.input.key.Key
 import arrowEventToDirection
@@ -18,48 +19,48 @@ interface UiEvent {
 class ArrowKeyEvent(event: Key) : UiEvent {
     private val direction: Direction = arrowEventToDirection[event]!!
     override suspend fun process() {
-        EditorViewModel.onCaretMovement(direction)
+        App.editorViewModel.onCaretMovement(direction)
     }
 }
 
 class TextInsertionEvent(private val text: String) : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onTextInsertion(text)
+        App.editorViewModel.onTextInsertion(text)
     }
 }
 
 class NewlineKeyEvent : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onNewline()
+        App.editorViewModel.onNewline()
     }
 }
 
 class BackspaceKeyEvent : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onTextDeletion()
+        App.editorViewModel.onTextDeletion()
     }
 }
 
 class FileSaveRequestEvent : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onFileSave()
+        App.editorViewModel.onFileSave()
     }
 }
 
 class OpenFileInEditorEvent(private val file: URI) : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onFileOpening(file)
+        App.editorViewModel.onFileOpening(file)
     }
 }
 
 class CloseFileInEditorEvent(private val file: URI) : UiEvent {
     override suspend fun process() {
-        EditorViewModel.onFileClosing(file)
+        App.editorViewModel.onFileClosing(file)
     }
 }
 
 class SetCaretEvent(private val line: Int, private val offset: Int) : UiEvent {
     override suspend fun process() {
-        EditorViewModel.setCaret(line, offset)
+        App.editorViewModel.setCaret(line, offset)
     }
 }

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.*
 import language.Level
 import java.net.URI
 
-class Document(initialText: String = "", val fileURI: URI) {
+class Document(initialText: String = "", override val fileURI: URI) : IDocument {
     inner class CaretModel : ICaretModel {
         private var _caretLine = 0
         override val caretLine get() = _caretLine
@@ -89,13 +89,13 @@ class Document(initialText: String = "", val fileURI: URI) {
     val highlighters
         get() = HighlighterProvider.getHighlighters(observableText.value, Level.SEMANTIC)
 
-    val caretModel = CaretModel()
+    override val caretModel = CaretModel()
     private var _text: TextBuffer = SimpleArrayTextBuffer(initialText)
 
     private val mutableText = MutableStateFlow(_text.getText())
-    val observableText: StateFlow<String> = mutableText.asStateFlow()
+    override val observableText: StateFlow<String> = mutableText.asStateFlow()
 
-    fun insertChar(char: Char) {
+    override fun insertChar(char: Char) {
         modifying {
             _text.add(char, caretModel.absoluteOffset)
         }
@@ -103,9 +103,9 @@ class Document(initialText: String = "", val fileURI: URI) {
         caretModel.moveCaret(Direction.RIGHT, acrossLine = false)
     }
 
-    fun insertText(text: String) = text.forEach { insertChar(it) }
+    override fun insertText(text: String) = text.forEach { insertChar(it) }
 
-    fun removeChar() {
+    override fun removeChar() {
         if (caretModel.absoluteOffset != 0) {
             caretModel.moveCaret(Direction.LEFT)
             modifying {
@@ -114,15 +114,15 @@ class Document(initialText: String = "", val fileURI: URI) {
         }
     }
 
-    fun getLineNumber(offset: Int) = _text.getLineNumber(offset)
-    fun getLineStartOffset(line: Int) = _text.getLineStartOffset(line)
-    fun getLineEndOffset(line: Int) = _text.getLineEndOffset(line)
-    fun getLineOffsets(line: Int) = _text.getLineOffsets(line)
+    override fun getLineNumber(offset: Int) = _text.getLineNumber(offset)
+    override fun getLineStartOffset(line: Int) = _text.getLineStartOffset(line)
+    override fun getLineEndOffset(line: Int) = _text.getLineEndOffset(line)
+    override fun getLineOffsets(line: Int) = _text.getLineOffsets(line)
 
     fun getLineCount() = _text.lineCount
 
     @OptIn(FlowPreview::class)
-    suspend fun subscribe(flow: StateFlow<ByteArray>) {
+    override suspend fun subscribe(flow: StateFlow<ByteArray>) {
         flow.debounce(1000).collect { ba ->
             mutableText.update { ba.decodeToString() }
             _text = SimpleArrayTextBuffer(ba.decodeToString())

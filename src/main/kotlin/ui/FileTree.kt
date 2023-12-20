@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -91,7 +92,7 @@ private fun LazyListScope.Node(
                 ContextMenuItem("Delete") { TODO() },
             )
         }) {
-            Row {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 // spacer adds left padding to visualise tree-like structure
                 Spacer(modifier = Modifier.width(8.dp * depth))
                 when (node.kind) {

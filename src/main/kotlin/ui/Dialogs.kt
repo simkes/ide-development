@@ -50,7 +50,7 @@ fun FileChooserDialog(uiModel: UiModel) = with(uiModel) {
         dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         dialog.showOpenDialog(null)
         if (dialog.selectedFile != null) {
-            root.value = viewModel.virtualFileSystem.listDirectory(dialog.selectedFile.toPath())
+            root.value = App.vfs.listDirectory(dialog.selectedFile.toPath())
         } else if (root.value == null) {
             noSourceDirectoryChosenDialogVisible.value = true
         }

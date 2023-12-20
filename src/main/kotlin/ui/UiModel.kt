@@ -13,8 +13,7 @@ import arrowEventToDirection
 import editor.EditorViewModel
 import kotlinx.coroutines.CoroutineScope
 import vfs.FileTreeNode
-class UiModel(val applicationScope: ApplicationScope, val coroutineScope: CoroutineScope) {
-    val viewModel = EditorViewModel
+class UiModel(val applicationScope: ApplicationScope, val viewModel: EditorViewModel, coroutineScope: CoroutineScope, ) {
     val eventProcessor = UiEventProcessor(coroutineScope)
 
     val text by viewModel.text
@@ -24,12 +23,17 @@ class UiModel(val applicationScope: ApplicationScope, val coroutineScope: Corout
         eventProcessor.startEventProcessing()
     }
 
+    fun close() {
+        eventProcessor.stopEventProcessing()
+    }
+
     val fileChooseDialogVisible = mutableStateOf(true)
     val noSourceDirectoryChosenDialogVisible = mutableStateOf(false)
 
     val requester = FocusRequester()
     val caretVisible = mutableStateOf(true)
     var root: MutableState<FileTreeNode?> = mutableStateOf(null)
+    val isEditorOpened get() = docs.value.isNotEmpty()
 
     fun emit(event: () -> UiEvent) {
         eventProcessor.newEvent(event())
