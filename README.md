@@ -4,7 +4,10 @@
 
 ## How to build and run
 
-TODO
+Run `Main.kt` file in your IDE or use this gradle command:
+```bash
+./gradlew run
+```
 
 ## Technical decisions
 
