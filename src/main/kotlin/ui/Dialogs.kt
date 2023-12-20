@@ -62,32 +62,37 @@ fun FileChooserDialog(uiModel: UiModel) = with(uiModel) {
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FileEntryDialog(modifier: Modifier = Modifier) = with(App.uiModel) {
     if (fileEntryDialogVisible.value) {
-        Dialog(
-            dispose = {},
-            create = { ComposeDialog() }
-        ) {
-            Column(modifier = modifier.width(200.dp).height(200.dp)) {
-                TextField("Enter name of file", onValueChange = {
-                    input = it
+        AlertDialog(
+            onDismissRequest = { fileEntryDialogVisible.value = false },
+            text = {
+                TextField(input.value, onValueChange = {
+                    input.value = it
                 })
-            }
-            Row {
-                Button(onClick = {
-                    fileEntryDialogVisible.value = false
-                }) {
-                    Text("OK")
+            },
+            buttons = {
+                Row {
+                    Button(onClick = {
+                        fileEntryDialogVisible.value = false
+                        if (input.value.isNotEmpty()) {
+                            App.workingDirectory.createChildFile(input.value)
+                            root.value = App.vfs.listDirectory(App.workingDirectoryPath!!)
+                        }
+                    }) {
+                        Text("OK")
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        input.value = ""
+                        fileEntryDialogVisible.value = false
+                    }) {
+                        Text("Cancel")
+                    }
                 }
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = {
-                    input = ""
-                    fileEntryDialogVisible.value = false
-                }) {
-                    Text("Cancel")
-                }
             }
-        }
+        )
     }
 }

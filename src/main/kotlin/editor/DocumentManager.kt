@@ -45,7 +45,7 @@ class DocumentManager(private val scope: CoroutineScope) {
 
     fun saveDocument(document: IDocument) {
         val virtualFile = docToFile[document] ?: (TODO("File relation is missing?"))
-        virtualFile.setBinaryContent(document.observableText.value.toByteArray())
+        virtualFile.setBinaryContentInSource(document.observableText.value.toByteArray())
     }
 
     private fun closeDocument(document: IDocument) {

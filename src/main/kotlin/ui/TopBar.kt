@@ -20,10 +20,6 @@ fun TopBar(model: UiModel, modifier: Modifier) = with(model) {
             }
             DropdownMenuItem(onClick = {
                 model.fileEntryDialogVisible.value = true
-                if (input.isNotEmpty()) {
-                    App.workingDirectory.createChildFile(input)
-                    root.value = App.vfs.listDirectory(App.workingDirectoryPath!!)
-                }
             }) {
                 Text("New File")
             }
