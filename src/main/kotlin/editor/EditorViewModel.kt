@@ -75,6 +75,10 @@ object EditorViewModel {
         Pair(this.caretLine, this.caretOffset)
     }
 
+    fun setCaret(line: Int, offset: Int) {
+        _currentDocument.caretModel.setCaret(line, offset)
+    }
+
     fun onTextDeletion(step: Int = 1) {
         repeat(step) {
             _currentDocument.removeChar()
