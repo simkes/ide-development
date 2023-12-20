@@ -71,6 +71,14 @@ class Document(initialText: String = "", val fileURI: URI) {
             _lineStartOffset = start; _lineEndOffset = end
         }
 
+        override fun setCaret(line: Int, offset: Int) {
+            assert(line >= 0) // TODO: probably should have totalLines
+            _caretLine = line
+            updateLine()
+            assert(_lineStartOffset + offset in _lineStartOffset.._lineEndOffset)
+            rememberedOffset = _lineStartOffset + offset
+        }
+
         override fun newline() {
             _caretLine++
             updateLine()

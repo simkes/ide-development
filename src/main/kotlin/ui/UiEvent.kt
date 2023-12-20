@@ -57,3 +57,9 @@ class CloseFileInEditorEvent(private val file: URI) : UiEvent {
         EditorViewModel.onFileClosing(file)
     }
 }
+
+class SetCaretEvent(private val line: Int, private val offset: Int) : UiEvent {
+    override suspend fun process() {
+        EditorViewModel.setCaret(line, offset)
+    }
+}

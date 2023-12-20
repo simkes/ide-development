@@ -1,27 +1,52 @@
 package ui
 
+import ViewConfig
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.style.TextDecoration
 import highlighting.Highlighter
 import verticalDividerModifier
+
+data class ErrorStringHolder(
+    val locationString: AnnotatedString,
+    val location: Pair<Int, Int>,
+    val errorString: AnnotatedString
+)
 
 @Composable
 fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel) {
     val errorMessages = viewModel.highlighters.value.let {
-        val mapToErrorMsgs: List<Highlighter>.() -> List<String> = {
+        val mapToErrorMsgs: List<Highlighter>.() -> List<ErrorStringHolder> = {
             this.filter { it.errorMessage != null }.map { highlighter ->
                 val lineNum = viewModel.getLineNumber(highlighter.startOffset)
                 val lineStart = viewModel.getLineStart(lineNum)
-                "Line ${lineNum}, pos ${highlighter.startOffset - lineStart}: ${highlighter.errorMessage}"
+                val positionString = AnnotatedString(
+                    "Line ${lineNum}, pos ${highlighter.startOffset - lineStart}",
+                    spanStyle = SpanStyle(
+                        color = Color.Blue,
+                        fontFamily = ViewConfig.fontFamily,
+                        fontSize = ViewConfig.defaultFontSize,
+                        textDecoration = TextDecoration.Underline
+                    )
+                )
+                val errorString = AnnotatedString(
+                    ": ${highlighter.errorMessage}", spanStyle = SpanStyle(
+                        color = ViewConfig.defaultColor,
+                        fontFamily = ViewConfig.fontFamily,
+                        fontSize = ViewConfig.defaultFontSize
+                    )
+                )
+                ErrorStringHolder(positionString, Pair(lineNum, highlighter.startOffset - lineStart), errorString)
             }
         }
         it.first.mapToErrorMsgs() + it.second.mapToErrorMsgs()
@@ -34,9 +59,14 @@ fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel)
         }
         Divider(modifier = Modifier.verticalDividerModifier())
         LazyColumn {
-            errorMessages.forEach {
+            errorMessages.forEach { (locationString, location, errorString) ->
                 item {
-                    Text(it)
+                    Row {
+                        ClickableText(locationString) {
+                            uiModel.emit { SetCaretEvent(location.first, location.second) }
+                        }
+                        Text(errorString)
+                    }
                 }
             }
         }
