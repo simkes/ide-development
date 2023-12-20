@@ -1,5 +1,7 @@
 # IDELang Supported Errors
 
+It is list of code errors that will be detected by our editor.
+
 1. Unexpected symbol.
 
     `var a = $ 5;`
@@ -52,7 +54,7 @@
     `a = 1 + proc();`
 
 
-14. Invalid operator - using unary operator instead of binary and vice-versa.
+14. Invalid operator - using binary operator instead of unary.
 
     `a = %"someString"`
 
