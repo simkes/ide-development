@@ -1,0 +1,60 @@
+Terminals:
+eps
+identifier
+constant
+stringLiteral
+boolValue (true, false)
++
+-
+*
+/
+%
+!
+&&
+||
+relation (==, !=, <, > ...)
+(
+)
+{
+}
+;
+:
+=
+var
+func
+proc
+if
+else
+while
+print
+return
+number
+string
+bool
+
+Grammar rules:
+
+Program -> StatementList
+StatementList -> Statement StatementList | eps
+Statement -> VarDeclaration | Assignment | IfStatement | WhileStatement | Block | PrintStatement |  FuncDeclaration | ReturnStatement | ProcDeclaration | ProcCall
+VarDeclaration -> var identifier = Expr ;
+Assignment -> identifier = Expression ;
+IfStatement -> if ( Expr ) Block [else Block]
+WhileStatement -> while ( Expr ) Block
+Block -> { StatementList }
+PrintStatement -> print ( Expr ) ;
+FuncDeclaration -> func identifier ( Parameters ) Block
+ReturnStatement -> return Expr ;
+ProcDeclaration -> proc identifier ( Parameters ) Block
+Parameters -> eps | Parameter
+Parameter -> Parameter , identifier : Type | identifier : Type
+Type -> number | string | bool
+ProcCall -> identifier ( Arguments ) ;
+Arguments -> eps | Argument
+Argument -> Argument , Expr | Expr
+Expr -> Expr + Term | Expr - Term | Expr % Term | Expr || Term | Term | Expr relation Expr
+Term -> Term * Factor | Term / Factor | Term && Factor | Factor
+Factor -> ! Factor | - Factor | FuncCall | constant | stringLiteral | boolValue | identifier | ( Expr )
+FuncCall -> identifier ( Arguments )
+
+
