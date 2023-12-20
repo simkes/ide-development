@@ -74,6 +74,10 @@ fun EditorCanvas(
                                 min(caretPos, lines[caretLine].length)
                             )
                         )
+                        caretX = textMeasurer.measure(
+                            lineStr,
+                            style = ViewConfig.defaultTextStyle
+                        ).size.width.toFloat()
 
                         translate(
                             60f - horizontalScrollState.value,
@@ -101,10 +105,6 @@ fun EditorCanvas(
                                     end = Offset(caretX, caretY + charHeight),
                                     strokeWidth = 1f
                                 )
-                                caretX = textMeasurer.measure(
-                                    lineStr,
-                                    style = ViewConfig.defaultTextStyle
-                                ).size.width.toFloat()
                             }
 
                             underlined.forEach { highlighter ->
