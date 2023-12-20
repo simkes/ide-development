@@ -9,6 +9,12 @@ Run `Main.kt` file in your IDE or use this gradle command:
 ./gradlew run
 ```
 
+## Speeded-up video of editor
+
+https://github.com/simkes/ide-development/assets/90139260/045d4dcf-35d2-4497-8c45-3b1f2b4d4253
+
+
+
 ## Technical decisions
 
 Data structure used for text - gap buffer.
