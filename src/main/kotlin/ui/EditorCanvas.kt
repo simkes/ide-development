@@ -42,7 +42,7 @@ fun EditorCanvas(
         ) {
             text.let {
                 val textStyle = TextStyle(fontSize = 13.sp, fontFamily = FontFamily.Monospace)
-                val (colored, underlined) = viewModel.highlighters.value
+                val (colored, underlined) = viewModel.highlighters
                 val highlighters = colored.map { highlighter ->
                     AnnotatedString.Range(
                         SpanStyle(
