@@ -25,7 +25,11 @@ data class ErrorStringHolder(
 
 @Composable
 fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel) {
-    val errorMessages = viewModel.highlighters.value.let {
+    viewModel.text.value
+    // this is a crutch:
+    // need recomposition, but require it to happen only when both text and highlighters are updated.
+    // If both are mutableStates, one of them can be not updated when the other one calls recomposition
+    val errorMessages = viewModel.highlighters.let {
         val mapToErrorMsgs: List<Highlighter>.() -> List<ErrorStringHolder> = {
             this.filter { it.errorMessage != null }.map { highlighter ->
                 val lineNum = viewModel.getLineNumber(highlighter.startOffset)
