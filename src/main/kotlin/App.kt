@@ -16,8 +16,10 @@ import kotlinx.coroutines.delay
 import ui.*
 import vfs.VirtualFile
 import vfs.VirtualFileSystemImpl
+import java.nio.file.Path
 
 object App {
+    var workingDirectoryPath: Path? = null
     lateinit var workingDirectory: VirtualFile
     val vfs = VirtualFileSystemImpl(GlobalScope)
     val editorViewModel = EditorViewModel(GlobalScope)
@@ -44,6 +46,8 @@ object App {
                 NoSourceDirectoryChosenDialog(uiModel)
                 // TODO: dialog does not disappear when new choosing dialog appears
             }
+
+            FileEntryDialog()
 
             if (uiModel.root.value != null) {
                 Column {

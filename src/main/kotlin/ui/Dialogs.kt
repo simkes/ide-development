@@ -1,11 +1,13 @@
 package ui
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeDialog
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.Window
 import javax.swing.JFileChooser
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -50,10 +52,42 @@ fun FileChooserDialog(uiModel: UiModel) = with(uiModel) {
         dialog.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         dialog.showOpenDialog(null)
         if (dialog.selectedFile != null) {
-            root.value = App.vfs.listDirectory(dialog.selectedFile.toPath())
-        } else if (root.value == null) {
+            App.workingDirectoryPath = dialog.selectedFile.toPath()
+            App.workingDirectory = App.vfs.getFile(App.workingDirectoryPath!!.toUri())
+            App.uiModel.root.value = App.vfs.listDirectory(App.workingDirectoryPath!!)
+        } else if (App.workingDirectoryPath == null) {
             noSourceDirectoryChosenDialogVisible.value = true
         }
         fileChooseDialogVisible.value = false
+    }
+}
+
+@Composable
+fun FileEntryDialog(modifier: Modifier = Modifier) = with(App.uiModel) {
+    if (fileEntryDialogVisible.value) {
+        Dialog(
+            dispose = {},
+            create = { ComposeDialog() }
+        ) {
+            Column(modifier = modifier.width(200.dp).height(200.dp)) {
+                TextField("Enter name of file", onValueChange = {
+                    input = it
+                })
+            }
+            Row {
+                Button(onClick = {
+                    fileEntryDialogVisible.value = false
+                }) {
+                    Text("OK")
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = {
+                    input = ""
+                    fileEntryDialogVisible.value = false
+                }) {
+                    Text("Cancel")
+                }
+            }
+        }
     }
 }

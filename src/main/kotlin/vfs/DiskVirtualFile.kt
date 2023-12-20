@@ -10,7 +10,7 @@ import kotlin.io.path.*
 
 class DiskVirtualFile(val path: Path, private val vfs: VirtualFileSystem) :
     VirtualFile {
-    private var content: MutableStateFlow<ByteArray>
+    private var content: MutableStateFlow<ByteArray> = MutableStateFlow(ByteArray(0))
     private val children: MutableMap<URI, VirtualFile> = mutableMapOf()
     override val contentsFlow: StateFlow<ByteArray>
         get() = content.asStateFlow()
@@ -24,7 +24,7 @@ class DiskVirtualFile(val path: Path, private val vfs: VirtualFileSystem) :
     override fun getName() = path.fileName.toString()
 
     init {
-        content = MutableStateFlow(getBinaryContentFromSource())
+        if (!isDirectory()) content = MutableStateFlow(getBinaryContentFromSource())
     }
 
     override fun getBinaryContentFromSource(): ByteArray {

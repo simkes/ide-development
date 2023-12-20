@@ -29,6 +29,9 @@ class UiModel(val applicationScope: ApplicationScope, val viewModel: EditorViewM
 
     val fileChooseDialogVisible = mutableStateOf(true)
     val noSourceDirectoryChosenDialogVisible = mutableStateOf(false)
+    val fileEntryDialogVisible = mutableStateOf(false)
+
+    var input: String = ""
 
     val requester = FocusRequester()
     val caretVisible = mutableStateOf(true)
