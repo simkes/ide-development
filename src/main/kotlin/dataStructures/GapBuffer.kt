@@ -52,7 +52,7 @@ class GapBuffer(initialText: String = "", private val initialGapSize: Int = 100)
     }
 
     private fun translateTextIntoBufferCoordinates(textPos: Int): Int {
-        if (textPos <= gapStart)
+        if (textPos < gapStart)
             return textPos
         return textPos + (gapEnd - gapStart + 1)
     }
