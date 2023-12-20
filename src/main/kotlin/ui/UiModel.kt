@@ -1,6 +1,7 @@
 package ui
 
 import ASCII_RANGE
+import SPACES_IN_TAB
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +46,7 @@ class UiModel(val applicationScope: ApplicationScope, val coroutineScope: Corout
             }
 
             if (keyEvent.key == Key.Tab) {
-                emit { TextInsertionEvent("  ") }
+                emit { TextInsertionEvent(" ".repeat(SPACES_IN_TAB)) }
                 return true
             }
 
