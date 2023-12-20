@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -24,7 +25,7 @@ import kotlin.math.min
 @Composable
 fun EditorCanvas(
     uiModel: UiModel,
-    modifier: Modifier
+    modifier: Modifier = Modifier
 ) = with(uiModel) {
     val textMeasurer = rememberTextMeasurer()
     val caretVisible = remember { caretVisible }
@@ -42,7 +43,7 @@ fun EditorCanvas(
         ) {
             text.let {
                 val textStyle = TextStyle(fontSize = 13.sp, fontFamily = FontFamily.Monospace)
-                val (colored, underlined) = viewModel.highlighters
+                val (colored, underlined) = viewModel.highlighters.value
                 val highlighters = colored.map { highlighter ->
                     AnnotatedString.Range(
                         SpanStyle(
