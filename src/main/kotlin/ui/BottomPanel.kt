@@ -1,6 +1,7 @@
 package ui
 
 import ViewConfig
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.style.TextDecoration
@@ -37,7 +37,7 @@ fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel)
                 val positionString = AnnotatedString(
                     "Line ${lineNum + 1}, pos ${highlighter.startOffset - lineStart}",
                     spanStyle = SpanStyle(
-                        color = Color.Blue,
+                        color = ViewConfig.errorLinkColor,
                         fontFamily = ViewConfig.fontFamily,
                         fontSize = ViewConfig.defaultFontSize,
                         textDecoration = TextDecoration.Underline
@@ -45,7 +45,7 @@ fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel)
                 )
                 val errorString = AnnotatedString(
                     ": ${highlighter.errorMessage}", spanStyle = SpanStyle(
-                        color = ViewConfig.defaultColor,
+                        color = ViewConfig.defaultTextColor,
                         fontFamily = ViewConfig.fontFamily,
                         fontSize = ViewConfig.defaultFontSize
                     )
@@ -55,10 +55,10 @@ fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel)
         }
         it.first.mapToErrorMsgs() + it.second.mapToErrorMsgs()
     }
-    Row(modifier = modifier) {
-        Column {
+    Row(modifier = modifier.background(color = ViewConfig.lightMainBackgroundColor)) {
+        Column  {
             IconButton(onClick = {}) {
-                Icon(Icons.Default.Error, "")
+                Icon(Icons.Default.Error, "", tint = ViewConfig.errorIconColor)
             }
         }
         Divider(modifier = Modifier.verticalDividerModifier())

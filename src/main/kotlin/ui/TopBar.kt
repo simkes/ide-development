@@ -1,5 +1,6 @@
 package ui
 
+import ViewConfig
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -56,8 +57,9 @@ fun TopBarEntry(
 
     Text(
         name,
-        modifier = modifier.padding(horizontal = 4.dp).hoverModifier()
-
+        modifier = modifier.padding(horizontal = 4.dp).hoverModifier(),
+        color = ViewConfig.defaultTextColor,
+        fontSize = ViewConfig.bigFontSize
     )
 
     if (isExpanded) {

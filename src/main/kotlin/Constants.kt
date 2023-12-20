@@ -31,7 +31,7 @@ val highlighterColorToComposeColor = { color: highlighting.Color ->
         highlighting.Color.PURPLE -> Color(0xFF9d6c7c)
         highlighting.Color.GREEN -> Color(0xFF7d9726)
         highlighting.Color.BLUE -> Color(0xFF5f9182)
-        highlighting.Color.BLACK -> Color(0xFF878573)
+        highlighting.Color.BLACK -> ViewConfig.defaultTextColor
     }
 }
 
@@ -47,8 +47,14 @@ object ViewConfig {
     val fontFamily = FontFamily.Monospace
     val defaultFontSize = 12.sp
     val defaultColor = Color.Black
-
     val defaultTextStyle = TextStyle(
         fontSize = defaultFontSize, fontFamily = fontFamily, color = defaultColor
     )
+    val bigFontSize = 14.sp
+    val defaultTextColor = Color(0xFFd0cfc8)
+    val errorLinkColor = Color(0xFFae7313)
+    val errorIconColor = Color(0xFFff5c33)
+    val darkBackgroundColor = Color(0xFF333333)
+    val lightMainBackgroundColor = Color(0xFF666666)
+    val widgetBackgroundColor = Color(0xFF4d4d4d)
 }

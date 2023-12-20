@@ -99,13 +99,18 @@ private fun LazyListScope.Node(
                     FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Outlined.Description, "")
                     else -> Icon(Icons.Outlined.Folder, "")
                 }
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     node.fileName.toString(),
                     modifier = modifier,
-                    style = ViewConfig.defaultTextStyle.copy(fontFamily = FontFamily.Default)
+                    style = ViewConfig.defaultTextStyle.copy(fontFamily = FontFamily.Default),
+                    color = ViewConfig.defaultTextColor,
+                    fontSize = ViewConfig.bigFontSize
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
     if (isExpanded(node)) {
         Nodes(

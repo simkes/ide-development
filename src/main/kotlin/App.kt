@@ -1,4 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,7 +51,7 @@ object App {
             FileEntryDialog()
 
             if (uiModel.root.value != null) {
-                Column {
+                Column(modifier = Modifier.background(color = ViewConfig.lightMainBackgroundColor)) {
                     TopBar(uiModel, Modifier)
                     Divider()
                     Row(modifier = Modifier.weight(3f)) {
@@ -72,7 +73,7 @@ object App {
                         }
                     }
                     Divider()
-                    BottomPanel(uiModel, modifier = Modifier.weight(1f))
+                    BottomPanel(uiModel, modifier = Modifier.weight(1f).background(color = ViewConfig.widgetBackgroundColor))
                 }
             } else if (!uiModel.fileChooseDialogVisible.value && !uiModel.noSourceDirectoryChosenDialogVisible.value) {
                 assert(false)
