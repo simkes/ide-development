@@ -4,12 +4,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import highlighting.Highlighter
 
 enum class Direction {
     UP,
@@ -41,7 +39,7 @@ val verticalDividerModifier: Modifier.() -> Modifier = {
     this.fillMaxHeight().width(1.dp)
 }
 
-val ASCII_RANGE = 9 .. 128
+val ASCII_RANGE = 9..128
 const val OPENED_DOCUMENTS_LIMIT = 2
 const val SPACES_IN_TAB = 2
 
@@ -49,4 +47,8 @@ object ViewConfig {
     val fontFamily = FontFamily.Monospace
     val defaultFontSize = 12.sp
     val defaultColor = Color.Black
+
+    val defaultTextStyle = TextStyle(
+        fontSize = defaultFontSize, fontFamily = fontFamily, color = defaultColor
+    )
 }
