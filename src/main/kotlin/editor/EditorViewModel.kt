@@ -90,6 +90,9 @@ object EditorViewModel {
         documentManager.saveDocument(_currentDocument)
     }
 
+    fun getLineStart(line: Int) = _currentDocument.getLineStartOffset(line)
+    fun getLineNumber(offset: Int) = _currentDocument.getLineNumber(offset)
+
     // TODO: test only
     fun purge() {
         text.value = ""
