@@ -5,7 +5,6 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -118,16 +117,47 @@ fun EditorCanvas(
                                     strokeWidth = 2f
                                 )
                             } else {
-                                val y =
-                                    measuredText.getLineBottom(measuredText.getLineForOffset(highlighter.startOffset))
+                                val y1 = measuredText.getLineForOffset(highlighter.startOffset)
+                                val y2 = measuredText.getLineForOffset(highlighter.endOffset)
                                 val x1 = measuredText.getHorizontalPosition(highlighter.startOffset, true)
                                 val x2 = measuredText.getHorizontalPosition(highlighter.endOffset, true)
-                                drawLine(
-                                    color = Color.Red,
-                                    start = Offset(x1, y),
-                                    end = Offset(x2, y),
-                                    strokeWidth = 2f
-                                )
+                                if(y1 == y2) { // error is on one line
+                                    val y = measuredText.getLineBottom(y1)
+                                    drawLine(
+                                        color = Color.Red,
+                                        start = Offset(x1, y),
+                                        end = Offset(x2, y),
+                                        strokeWidth = 2f
+                                    )
+                                } else {
+                                    for (y in y1 + 1 until y2) {
+                                        val lineX1 = measuredText.getHorizontalPosition(measuredText.getLineStart(y), true)
+                                        val lineX2 = measuredText.getHorizontalPosition(measuredText.getLineEnd(y), true)
+                                        val lineY = measuredText.getLineBottom(y)
+                                        drawLine(
+                                            color = Color.Red,
+                                            start = Offset(lineX1, lineY),
+                                            end = Offset(lineX2, lineY),
+                                            strokeWidth = 2f
+                                        )
+                                    }
+                                    val y1LineEnd = measuredText.getHorizontalPosition(measuredText.getLineEnd(y1), true)
+                                    val lineY1 = measuredText.getLineBottom(y1)
+                                    drawLine(
+                                        color = Color.Red,
+                                        start = Offset(x1, lineY1),
+                                        end = Offset(y1LineEnd, lineY1),
+                                        strokeWidth = 2f
+                                    )
+                                    val y2LineStart = measuredText.getHorizontalPosition(measuredText.getLineStart(y2), true)
+                                    val lineY2 = measuredText.getLineBottom(y2)
+                                    drawLine(
+                                        color = Color.Red,
+                                        start = Offset(y2LineStart, lineY2),
+                                        end = Offset(x2, lineY2),
+                                        strokeWidth = 2f
+                                    )
+                                }
                             }
                         }
                     }

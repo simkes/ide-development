@@ -31,7 +31,7 @@ fun BottomPanel(uiModel: UiModel, modifier: Modifier = Modifier) = with(uiModel)
                 val lineNum = viewModel.getLineNumber(highlighter.startOffset)
                 val lineStart = viewModel.getLineStart(lineNum)
                 val positionString = AnnotatedString(
-                    "Line ${lineNum}, pos ${highlighter.startOffset - lineStart}",
+                    "Line ${lineNum + 1}, pos ${highlighter.startOffset - lineStart}",
                     spanStyle = SpanStyle(
                         color = Color.Blue,
                         fontFamily = ViewConfig.fontFamily,
