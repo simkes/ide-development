@@ -9,7 +9,7 @@ class GapBuffer(initialText: String = "", private val initialGapSize: Int = 100)
     private var gapEnd: Int
 
     init {
-        if (initialGapSize <= 0) throw IllegalArgumentException("init: gap size $initialGapSize.")
+        if (initialGapSize <= 1) throw IllegalArgumentException("init: gap size $initialGapSize. Gap size must be > 1.")
 
         buffer = CharArray(initialText.length + initialGapSize)
 
