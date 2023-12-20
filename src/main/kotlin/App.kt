@@ -54,10 +54,10 @@ object App {
                 Column(modifier = Modifier.background(color = ViewConfig.lightMainBackgroundColor)) {
                     TopBar(uiModel, Modifier)
                     Divider()
-                    Row(modifier = Modifier.weight(3f)) {
+                    Row(modifier = Modifier.weight(3f).background(color = ViewConfig.widgetBackgroundColor)) {
                         FileExplorer(uiModel, Modifier.width(150.dp))
                         Divider(modifier = Modifier.verticalDividerModifier())
-                        Column(modifier = Modifier) {
+                        Column(modifier = Modifier.background(color = ViewConfig.widgetBackgroundColor)) {
                             if (uiModel.isEditorOpened) {
                                 EditorBar(
                                     uiModel,
