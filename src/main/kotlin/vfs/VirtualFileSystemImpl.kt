@@ -39,12 +39,16 @@ class VirtualFileSystemImpl(scope: CoroutineScope) : VirtualFileSystem {
         val children = mutableListOf<FileTreeNode>()
         directory.listDirectoryEntries().forEach {
             if (it.isRegularFile()) {
-                children.add(FileTreeNode(it, FileTreeNode.TreeNodeKind.FILE, listOf()))
+                children.add(FileTreeNode(it, FileTreeNode.TreeNodeKind.FILE, listOf()) {})
             } else {
-                children.add(listDirectory(it))
+                children.add(FileTreeNode(it, FileTreeNode.TreeNodeKind.UNINITIALIZED, listOf()) {
+                    val listed = listDirectory(it)
+                    this.kind = FileTreeNode.TreeNodeKind.DIRECTORY
+                    this.children = listed.children
+                })
             }
         }
-        return FileTreeNode(directory, FileTreeNode.TreeNodeKind.DIRECTORY, children)
+        return FileTreeNode(directory, FileTreeNode.TreeNodeKind.DIRECTORY, children) {}
     }
 
     init {

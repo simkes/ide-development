@@ -1,5 +1,6 @@
 package ui
 
+import ViewConfig
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.clickable
@@ -9,10 +10,11 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import vfs.FileTreeNode
 import kotlin.io.path.absolute
@@ -41,6 +43,7 @@ fun FileTree(uiModel: UiModel, modifier: Modifier) = with(uiModel) {
                 if (expandedNodes.contains(it)) {
                     expandedNodes.remove(it)
                 } else {
+                    if (it.kind == FileTreeNode.TreeNodeKind.UNINITIALIZED) it.gatherContent(it)
                     expandedNodes.add(it)
                 }
             },
@@ -69,7 +72,7 @@ private fun LazyListScope.Node(
     switchExpanded: (FileTreeNode) -> Unit,
     onFileClick: (FileTreeNode) -> Unit
 ) {
-    val modifier = if (node.kind == FileTreeNode.TreeNodeKind.DIRECTORY) {
+    val modifier = if (node.kind != FileTreeNode.TreeNodeKind.FILE) {
         Modifier.clickable {
             switchExpanded(node)
         }
@@ -92,12 +95,13 @@ private fun LazyListScope.Node(
                 // spacer adds left padding to visualise tree-like structure
                 Spacer(modifier = Modifier.width(8.dp * depth))
                 when (node.kind) {
-                    FileTreeNode.TreeNodeKind.DIRECTORY -> Icon(Icons.Default.Folder, "")
-                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Default.Description, "")
+                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Outlined.Description, "")
+                    else -> Icon(Icons.Outlined.Folder, "")
                 }
                 Text(
                     node.fileName.toString(),
-                    modifier = modifier
+                    modifier = modifier,
+                    style = ViewConfig.defaultTextStyle.copy(fontFamily = FontFamily.Default)
                 )
             }
         }
