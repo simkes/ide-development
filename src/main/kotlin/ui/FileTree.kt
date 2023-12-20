@@ -1,5 +1,6 @@
 package ui
 
+import ViewConfig
 import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.ContextMenuItem
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import vfs.FileTreeNode
@@ -88,19 +90,24 @@ private fun LazyListScope.Node(
                 ContextMenuItem("Delete") { TODO() },
             )
         }) {
-            Row {
+            Row (verticalAlignment = Alignment.CenterVertically) {
                 // spacer adds left padding to visualise tree-like structure
                 Spacer(modifier = Modifier.width(8.dp * depth))
                 when (node.kind) {
-                    FileTreeNode.TreeNodeKind.DIRECTORY -> Icon(Icons.Default.Folder, "")
-                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Default.Description, "")
+                    FileTreeNode.TreeNodeKind.DIRECTORY -> Icon(Icons.Default.Folder, "", tint = ViewConfig.defaultTextColor, modifier = Modifier.height(15.dp).width(15.dp))
+                    FileTreeNode.TreeNodeKind.FILE -> Icon(Icons.Default.Description, "", tint = ViewConfig.defaultTextColor, modifier = Modifier.height(15.dp).width(15.dp))
                 }
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     node.fileName.toString(),
-                    modifier = modifier
+                    modifier = modifier,
+                    color = ViewConfig.defaultTextColor,
+                    fontSize = ViewConfig.bigFontSize
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
     if (isExpanded(node)) {
         Nodes(

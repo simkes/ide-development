@@ -1,5 +1,6 @@
 package ui
 
+import ViewConfig
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
@@ -39,6 +40,7 @@ fun EditorCanvas(
             .fillMaxSize()
             .scrollable(verticalScrollState, Orientation.Vertical)
             .scrollable(horizontalScrollState, Orientation.Horizontal)
+            .background(color = ViewConfig.darkBackgroundColor)
         ) {
             text.let {
                 val textStyle = TextStyle(fontSize = 13.sp, fontFamily = FontFamily.Monospace)
@@ -95,7 +97,7 @@ fun EditorCanvas(
 
                     if (caretVisible.value) {
                         drawLine(
-                            color = Color.Black,
+                            color = Color.White,
                             start = Offset(caretX, caretY),
                             end = Offset(caretX, caretY + charHeight),
                             strokeWidth = 1f
