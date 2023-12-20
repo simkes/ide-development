@@ -6,7 +6,8 @@ fun main() {
         App.init(this)
         Window(onCloseRequest = {
             exitApplication()
-        }) {
+        },
+            title = "YAIDE") {
             App.run()
         }
     }
